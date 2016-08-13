@@ -1,0 +1,70 @@
+# copy this into a local.py file with your local configurations
+
+COMPETITION_GNT_PATH = "/media/bruce/disk/chinese-character-recognition/competition-gnt/"
+
+# character_encoding = { i: v.decode("utf8") for i,v in enumerate([ name.split(".")[0] for name in os.listdir(os.path.join(local.COMPETITION_GNT_PATH, "C002-f-f")) ]) }
+CHARACTERS = {
+	0: u'\u7a91', #窑
+	1: u'\u4f6f', #佯
+	2: u'\u5ef6', #延
+	3: u'\u8273', #艳
+	4: u'\u8200', #舀
+	5: u'\u8170', #腰
+	6: u'\u5830', #堰
+	7: u'\u8712', #蜒
+	8: u'\u960e', #阎
+	9: u'\u75d2', #痒
+	10: u'\u773c', #眼
+	11: u'\u71d5', #燕
+	12: u'\u6447', #摇
+	13: u'\u564e', #噎
+	14: u'\u9080', #邀
+	15: u'\u8000', #耀
+	16: u'\u989c', #颜
+	17: u'\u9a8c', #验
+	18: u'\u7130', #焰
+	19: u'\u6837', #样
+	20: u'\u63a9', #掩
+	21: u'\u5c27', #尧
+	22: u'\u5ca9', #岩
+	23: u'\u884d', #衍
+	24: u'\u5996', #妖
+	25: u'\u626c', #扬
+	26: u'\u6930', #椰
+	27: u'\u5bb4', #宴
+	28: u'\u708e', #炎
+	29: u'\u7476', #瑶
+	30: u'\u6768', #杨
+	31: u'\u538c', #药
+	32: u'\u836f', #药
+	33: u'\u54ac', #咬
+	34: u'\u59da', #姚
+	35: u'\u9e2f', #鸯
+	36: u'\u8a00', #言
+	37: u'\u4ef0', #仰
+	38: u'\u8036', #耶
+	39: u'\u6cbf', #沿
+	40: u'\u6f3e', #漾
+	41: u'\u6f14', #演
+	42: u'\u6b83', #殃
+	43: u'\u79e7', #秧
+	44: u'\u8981', #要
+	45: u'\u6d0b', #洋
+	46: u'\u781a', #砚
+	47: u'\u7f8a', #羊
+	48: u'\u75a1', #疡
+	49: u'\u6c27', #氧
+	50: u'\u96c1', #雁
+	51: u'\u9633', #阳
+	52: u'\u517b', #养
+	53: u'\u5944', #奄
+	54: u'\u8c1a',#谚
+	55:u'\u8c23', #谣
+	56:u'\u9065', #遥
+	57:u'\u5f66', #彦
+	58:u'\u592e', #央
+	59:u'\u5501', #唁
+	}
+
+if __name__=="__main__":
+	import ipdb; ipdb.set_trace()
