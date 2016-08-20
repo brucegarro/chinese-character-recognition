@@ -1,6 +1,6 @@
 import struct
 import scipy.misc
-import numpy
+import numpy as np
 import glob
 from collections import defaultdict
 import os
@@ -34,11 +34,12 @@ def gnt_to_bmp(filepath, write_images=False):
 			tag_name = tag_name.decode("gb2312")
 			width = struct.unpack("<H", f.read(2))[0]
 			height = struct.unpack("<H", f.read(2))[0]
+
 			raw_bytes = f.read(height*width)
-			bytes = struct.unpack("{}B".format(height*width), raw_bytes)
+			bytez = struct.unpack("{}B".format(height*width), raw_bytes)
 			existing_labels = full_data.keys()
 			if (tag_name in existing_labels) or (len(existing_labels) < num_classes):
-				image = numpy.array(bytes).reshape(height, width)
+				image = np.array(bytez).reshape(height, width)
 				image = scipy.misc.imresize(image, (side, side))
 
 				writer  = filepath.split("/")[-1].split(".")[0]
@@ -48,12 +49,24 @@ def gnt_to_bmp(filepath, write_images=False):
 				image = (image.astype(float) / 256) - 0.5 # normalize to [-0.5,0.5] to avoid saturation
 				images[(writer, tag_name)] = image
 				full_data[tag_name].append(image)
-	return images
+	print filepath
+	return full_data
+
+# writers = {
+#    "writer1": {u"\u1004": [2 x 2 array of image intensities]
+#    "writer2": ...
+# }
 
 def main():
+	write_images = False
+	writers = {}
 	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if f.endswith(".gnt") ]:
 		filepath = join(local.COMPETITION_GNT_PATH, name)
-		print gnt_to_bmp(filepath, write_images=True)
+		writer  = filepath.split("/")[-1].split(".")[0]
+		writers[writer] = gnt_to_bmp(filepath, write_images=write_images)
+	import ipdb; ipdb.set_trace()
+
+
 
 if __name__=="__main__":
 	main()
