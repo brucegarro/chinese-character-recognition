@@ -5,26 +5,25 @@ import glob
 from collections import defaultdict
 import os
 from os.path import join
+from six.moves import cPickle as pickle
 
 import local
 
-side = 224 # must be a multiple of 32 to work with maxpooling in vgg16
+size = 224 # must be a multiple of 32 to work with maxpooling in vgg16
 num_classes = 60
-full_data = defaultdict(list)
 
 def write_image(tag_name, image, writer):
-	# import ipdb; ipdb.set_trace()
 	writer_path = join(local.COMPETITION_GNT_PATH, writer)
 	if not os.path.exists(writer_path):
 		os.mkdir(writer_path)
 	output_path = join(writer_path, "%s.bmp" % tag_name)
 	# write image to bmp
-	scipy.misc.imsave(output_path, image)
-	print output_path
+	if not os.path.exists(output_path):
+		scipy.misc.imsave(output_path, image)
+		print output_path
 
-def gnt_to_bmp(filepath, write_images=False):
-	images = {}
-	with open(filepath, "rb") as f:
+def write_gnt_to_bmps(bmps_filepath):
+	with open(bmps_filepath, "rb") as f:
 		while True:
 			packed_length = f.read(4)
 			if packed_length == '' or packed_length == ' ' or packed_length == b'':
@@ -37,34 +36,32 @@ def gnt_to_bmp(filepath, write_images=False):
 
 			raw_bytes = f.read(height*width)
 			bytez = struct.unpack("{}B".format(height*width), raw_bytes)
-			existing_labels = full_data.keys()
-			if (tag_name in existing_labels) or (len(existing_labels) < num_classes):
-				image = np.array(bytez).reshape(height, width)
-				image = scipy.misc.imresize(image, (side, side))
 
-				writer  = filepath.split("/")[-1].split(".")[0]
-				if write_image:
-					write_image(tag_name, image, writer)
-				# scipy.misc.imsave("%s.bmp" % (tag_name), image)
-				image = (image.astype(float) / 256) - 0.5 # normalize to [-0.5,0.5] to avoid saturation
-				images[(writer, tag_name)] = image
-				full_data[tag_name].append(image)
-	print filepath
-	return full_data
+			image = np.array(bytez).reshape(height, width)
+			image = scipy.misc.imresize(image, (size, size))
 
-# writers = {
-#    "writer1": {u"\u1004": [2 x 2 array of image intensities]
-#    "writer2": ...
-# }
+			writer  = bmps_filepath.split("/")[-1].split(".")[0]
+			write_image(tag_name, image, writer)
+
+def get_classes():
+	# Not all writers have written examples for every classes so
+	# determine the classes which are present for all writers
+	classes = None
+	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if f.endswith(".gnt") ]:
+		filepath = join(local.COMPETITION_GNT_PATH, name.strip(".gnt"))
+		class_names = set([ sub_name.strip(".gnt") for sub_name in os.listdir(filepath) if f.endswith(".gnt") ])
+		if classes == None:
+			classes = class_names
+		else:
+			classes &= class_names
+	return classes
 
 def main():
-	write_images = False
-	writers = {}
-	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if f.endswith(".gnt") ]:
-		filepath = join(local.COMPETITION_GNT_PATH, name)
-		writer  = filepath.split("/")[-1].split(".")[0]
-		writers[writer] = gnt_to_bmp(filepath, write_images=write_images)
-	import ipdb; ipdb.set_trace()
+	# Product bmps
+	gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
+	bmps_filepaths = [ join(local.COMPETITION_GNT_PATH, name) for name in gnt_names ]
+	for bmps_filepath in bmps_filepaths:
+		write_gnt_to_bmps(bmps_filepath)
 
 
 
