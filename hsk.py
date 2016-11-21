@@ -5019,7 +5019,3 @@ vocab_6 = { word: 6 for word in [
 ]}
 
 vocab_level = dict(vocab_1.items() + vocab_2.items() + vocab_3.items() + vocab_4.items() + vocab_5.items() + vocab_6.items())
-
-def get_hanzi(literal):
-	char = "%u" % literal
-	return (char, vocab_level[char])
