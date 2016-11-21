@@ -47,9 +47,10 @@ def get_classes():
 	# Not all writers have written examples for every classes so
 	# determine the classes which are present for all writers
 	classes = None
-	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if f.endswith(".gnt") ]:
+	bmps_directories = [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ]
+	for name in bmps_directories:
 		filepath = join(local.COMPETITION_GNT_PATH, name.strip(".gnt"))
-		class_names = set([ sub_name.strip(".gnt") for sub_name in os.listdir(filepath) if f.endswith(".gnt") ])
+		class_names = set([ sub_name.strip(".bmp") for sub_name in os.listdir(filepath) if sub_name.endswith(".bmp") ])
 		if classes == None:
 			classes = class_names
 		else:
@@ -59,7 +60,8 @@ def get_classes():
 
 def bmps_to_pickle():
 	classes = get_classes()
-	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if f.endswith(".gnt") ]:
+
+	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ]:
 		filepath = join(local.COMPETITION_GNT_PATH, name)
 		writer  = filepath.split("/")[-1].split(".")[0]
 	output = {
@@ -76,11 +78,6 @@ def main():
 	gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
 	for bmps_filepath in bmps_filepaths:
 		write_gnt_to_bmps(bmps_filepath)
-
-	bmps_filepaths = [ join(local.COMPETITION_GNT_PATH, name) for name in gnt_names ]
-	for bmp_path in bmps_filepaths:
-
-
 
 if __name__=="__main__":
 	main()
