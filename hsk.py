@@ -5018,4 +5018,4 @@ vocab_6 = { word: 6 for word in [
   "座右铭",
 ]}
 
-vocab_level = dict(vocab_1.items() + vocab_2.items() + vocab_3.items() + vocab_4.items() + vocab_5.items() + vocab_6.items())
+vocab = dict(vocab_1.items() + vocab_2.items() + vocab_3.items() + vocab_4.items() + vocab_5.items() + vocab_6.items())

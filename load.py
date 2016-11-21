@@ -8,6 +8,7 @@ from os.path import join
 from six.moves import cPickle as pickle
 
 import local
+from hsk import vocab
 
 size = 224 # must be a multiple of 32 to work with maxpooling in vgg16
 num_classes = 60
@@ -43,7 +44,7 @@ def write_gnt_to_bmps(bmps_filepath):
 			writer  = bmps_filepath.split("/")[-1].split(".")[0]
 			write_image(tag_name, image, writer)
 
-def get_classes():
+def get_classes(hsk_levels=(1,2,3,4,5,6)):
 	# Not all writers have written examples for every classes so
 	# determine the classes which are present for all writers
 	classes = None
@@ -55,6 +56,10 @@ def get_classes():
 			classes = class_names
 		else:
 			classes &= class_names
+			
+	if hsk_levels:
+		classes = [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
+
 	return classes
 
 
