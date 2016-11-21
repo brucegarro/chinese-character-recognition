@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 vocab_1 = { word: 1 for word in [
   "爱",
   "八",
@@ -148,7 +150,7 @@ vocab_1 = { word: 1 for word in [
   "字",
   "昨天",
   "做",
-  "坐"
+  "坐",
 ]}
 
 vocab_2 = { word: 2 for word in [
@@ -301,7 +303,7 @@ vocab_2 = { word: 2 for word in [
   "准备",
   "走",
   "最",
-  "左边"
+  "左边",
 ]}
 
 vocab_3 = { word: 3 for word in [
@@ -604,7 +606,7 @@ vocab_3 = { word: 3 for word in [
   "嘴",
   "最后",
   "最近",
-  "作业"
+  "作业",
 ]}
 
 vocab_4 = { word: 4 for word in [
@@ -1207,7 +1209,7 @@ vocab_4 = { word: 4 for word in [
   "作用",
   "作者",
   "座",
-  "座位"
+  "座位",
 ]}
 
 vocab_5 = { word: 5 for word in [
@@ -2510,7 +2512,7 @@ vocab_5 = { word: 5 for word in [
   "遵守",
   "作品",
   "作为",
-  "作文"
+  "作文",
 ]}
 
 vocab_6 = { word: 6 for word in [
@@ -5013,7 +5015,11 @@ vocab_6 = { word: 6 for word in [
   "作风",
   "作息",
   "做主",
-  "座右铭"
+  "座右铭",
 ]}
 
-vocab = dict(vocab_1.items() + vocab_2.items() + vocab_3.items() + vocab_4.items() + vocab_5.items() + vocab_6.items())
+vocab_level = dict(vocab_1.items() + vocab_2.items() + vocab_3.items() + vocab_4.items() + vocab_5.items() + vocab_6.items())
+
+def get_hanzi(literal):
+	char = "%u" % literal
+	return (char, vocab_level[char])

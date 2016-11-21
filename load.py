@@ -56,12 +56,29 @@ def get_classes():
 			classes &= class_names
 	return classes
 
+
+def bmps_to_pickle():
+	classes = get_classes()
+	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if f.endswith(".gnt") ]:
+		filepath = join(local.COMPETITION_GNT_PATH, name)
+		writer  = filepath.split("/")[-1].split(".")[0]
+	output = {
+		"train_data": None,
+		"train_classes": None,
+		"valid_data": None,
+		"valid_classes": None,
+		"test_data": None,
+		"test_classes": None,
+	}
+
 def main():
-	# Product bmps
+	# Produce bmps
 	gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
-	bmps_filepaths = [ join(local.COMPETITION_GNT_PATH, name) for name in gnt_names ]
 	for bmps_filepath in bmps_filepaths:
 		write_gnt_to_bmps(bmps_filepath)
+
+	bmps_filepaths = [ join(local.COMPETITION_GNT_PATH, name) for name in gnt_names ]
+	for bmp_path in bmps_filepaths:
 
 
 
