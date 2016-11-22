@@ -10,8 +10,7 @@ from six.moves import cPickle as pickle
 import local
 from hsk import vocab
 
-size = 224 # must be a multiple of 32 to work with maxpooling in vgg16
-num_classes = 60
+img_size = 224 # must be a multiple of 32 to work with maxpooling in vgg16
 
 def write_image(tag_name, image, writer):
 	writer_path = join(local.COMPETITION_GNT_PATH, writer)
@@ -60,15 +59,73 @@ def get_classes(hsk_levels=(1,2,3,4,5,6)):
 	if hsk_levels:
 		classes = [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
 
-	return classes
+	return sorted(list(classes))
 
+
+def open_image_as_array(filepath):
+	with open(filepath, "rb") as f:
+		img = scipy.misc.imread(f, flatten=True)
+		for i in range(len(img)):
+			for j in range(len(img[0])):
+				img[i][j] = (img[i][j]/255.0) - 0.5
+	return img
+
+TRAIN_SET_SIZE = 0.5
+VALID_SET_SIZE = 0.3
+TEST_SET_SIZE = 0.2
 
 def bmps_to_pickle():
-	classes = get_classes()
+	classes = get_classes(hsk_levels=(1,2,3))
+	num_classes = 100
+	classes = classes[:num_classes]
+	class_labels = {label: i for i, label in enumerate(classes)}
+	number_of_authors = 60
+	
+	train_size = num_classes*number_of_authors*TRAIN_SET_SIZE
+	valid_size = num_classes*number_of_authors*VALID_SET_SIZE
+	test_size = num_classes*number_of_authors*TEST_SET_SIZE
 
-	for name in [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ]:
-		filepath = join(local.COMPETITION_GNT_PATH, name)
-		writer  = filepath.split("/")[-1].split(".")[0]
+	train_data = np.ndarray((train_size, img_size, img_size), dtype=np.float32)
+	valid_data = np.ndarray((valid_size, img_size, img_size), dtype=np.float32)
+	test_data = np.ndarray((test_size, img_size, img_size), dtype=np.float32)
+	train_labels = np.ndarray(train_size, dtype=np.int32)
+	valid_labels = np.ndarray(valid_size, dtype=np.int32)
+	test_labels = np.ndarray(test_size, dtype=np.int32)
+
+	random_indexes = list(np.arange(train_size+valid_size+test_size))
+	np.random.shuffle(random_indexes)
+
+	train_i = valid_i = test_i = 0
+
+	bmps_directories = sorted([ f for f in os.listdir(local.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
+	for name in bmps_directories:
+		bmps_directory = join(local.COMPETITION_GNT_PATH, name)
+		bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
+		assert len(bmps_names) == 100
+		np.random.shuffle(bmps_names)
+		for i, sub_name in enumerate(bmps_names):
+			bmp_path = join(local.COMPETITION_GNT_PATH, name, sub_name)
+			class_char = sub_name.strip(".bmp")
+			img = open_image_as_array(bmp_path)
+			if i < (TRAIN_SET_SIZE*num_classes):
+				np.copyto(train_data[train_i], img)
+				train_labels[train_i] = class_labels[class_char]
+				train_i += 1
+			elif (TRAIN_SET_SIZE*num_classes) <= i < ((TRAIN_SET_SIZE+VALID_SET_SIZE)*num_classes):
+				np.copyto(valid_data[valid_i], img)
+				valid_labels[valid_i] = class_labels[class_char]
+				valid_i += 1
+			else:
+				np.copyto(test_data[test_i], img)
+				test_labels[test_i] = class_labels[class_char]
+				test_i += 1
+
+	assert train_i == train_size - 1
+	assert valid_i == valid_size - 1
+	assert test_i == test_size - 1
+
+	import ipdb; ipdb.set_trace()
+	
 	output = {
 		"train_data": None,
 		"train_classes": None,
@@ -79,10 +136,12 @@ def bmps_to_pickle():
 	}
 
 def main():
-	# Produce bmps
-	gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
-	for bmps_filepath in bmps_filepaths:
-		write_gnt_to_bmps(bmps_filepath)
+	# # Produce bmps
+	# gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
+	# for bmps_filepath in bmps_filepaths:
+	# 	write_gnt_to_bmps(bmps_filepath)
+
+	bmps_to_pickle()
 
 if __name__=="__main__":
 	main()
