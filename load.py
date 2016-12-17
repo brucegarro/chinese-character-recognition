@@ -99,6 +99,7 @@ def bmps_to_pickle():
 
 	bmps_directories = sorted([ f for f in os.listdir(local.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
 	for name in bmps_directories:
+		print "author: %s" % name
 		bmps_directory = join(local.COMPETITION_GNT_PATH, name)
 		bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
 		assert len(bmps_names) == 100
@@ -120,20 +121,30 @@ def bmps_to_pickle():
 				test_labels[test_i] = class_labels[class_char]
 				test_i += 1
 
-	assert train_i == train_size - 1
-	assert valid_i == valid_size - 1
-	assert test_i == test_size - 1
 
-	import ipdb; ipdb.set_trace()
+	assert train_i == train_size
+	assert valid_i == valid_size
+	assert test_i == test_size
 	
 	output = {
-		"train_data": None,
-		"train_classes": None,
-		"valid_data": None,
-		"valid_classes": None,
-		"test_data": None,
-		"test_classes": None,
+		"train_data": train_data,
+		"train_labels": train_labels,
+		"valid_data": valid_data,
+		"valid_labels": valid_labels,
+		"test_data": test_data,
+		"test_labels": test_labels,
 	}
+
+	# import ipdb; ipdb.set_trace()
+	output_path = join(local.COMPETITION_GNT_PATH, "hsk_100_dataset.pickle")
+	f = open(output_path, "wb")
+	pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
+	f.close()
+
+def load_hsk_data():
+	with open(local.HSK_DATA_PATH, "rb") as f:
+		 data = pickle.load(f)
+	return data
 
 def main():
 	# # Produce bmps
