@@ -141,6 +141,16 @@ def bmps_to_pickle():
 	pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
 	f.close()
 
+def reformat(data, labels, num_channels=1):
+	_, x_size, y_size = data.shape
+
+	args = (-1, x_size, y_size, num_channels)
+	data = data.reshape(args).astype(np.float32)
+
+	num_labels = len(set(labels))
+	labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
+	return data, labels
+
 def load_hsk_data():
 	with open(local.HSK_DATA_PATH, "rb") as f:
 		 data = pickle.load(f)
