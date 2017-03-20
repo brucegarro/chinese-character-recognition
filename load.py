@@ -38,7 +38,7 @@ def write_gnt_to_bmps(bmps_filepath):
 			bytez = struct.unpack("{}B".format(height*width), raw_bytes)
 
 			image = np.array(bytez).reshape(height, width)
-			image = scipy.misc.imresize(image, (size, size))
+			image = scipy.misc.imresize(image, (img_size, img_size))
 
 			writer  = bmps_filepath.split("/")[-1].split(".")[0]
 			write_image(tag_name, image, writer)
@@ -158,11 +158,14 @@ def load_hsk_data():
 
 def main():
 	# # Produce bmps
-	# gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
 	# for bmps_filepath in bmps_filepaths:
-	# 	write_gnt_to_bmps(bmps_filepath)
 
-	bmps_to_pickle()
+	gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
+	bmps_filepaths = [ join(local.COMPETITION_GNT_PATH, name) for name in gnt_names ]
+	for bmp_path in bmps_filepaths:
+		write_gnt_to_bmps(bmp_path)
+
+	# bmps_to_pickle()
 
 if __name__=="__main__":
 	main()
