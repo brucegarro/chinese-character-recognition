@@ -55,7 +55,7 @@ def get_classes(hsk_levels=(1,2,3,4,5,6)):
 			classes = class_names
 		else:
 			classes &= class_names
-			
+
 	if hsk_levels:
 		classes = [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
 
@@ -80,7 +80,7 @@ def bmps_to_pickle():
 	classes = classes[:num_classes]
 	class_labels = {label: i for i, label in enumerate(classes)}
 	number_of_authors = 60
-	
+
 	train_size = num_classes*number_of_authors*TRAIN_SET_SIZE
 	valid_size = num_classes*number_of_authors*VALID_SET_SIZE
 	test_size = num_classes*number_of_authors*TEST_SET_SIZE
@@ -102,7 +102,10 @@ def bmps_to_pickle():
 		print "author: %s" % name
 		bmps_directory = join(local.COMPETITION_GNT_PATH, name)
 		bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
-		assert len(bmps_names) == 100
+		try:
+			assert len(bmps_names) == num_classes
+		except AssertionError:
+			raise Exception("Expected %s bmps in folder %s, only found %s" % (num_classes, bmps_directory, len(bmps_names)))
 		np.random.shuffle(bmps_names)
 		for i, sub_name in enumerate(bmps_names):
 			bmp_path = join(local.COMPETITION_GNT_PATH, name, sub_name)
@@ -125,7 +128,7 @@ def bmps_to_pickle():
 	assert train_i == train_size
 	assert valid_i == valid_size
 	assert test_i == test_size
-	
+
 	output = {
 		"train_data": train_data,
 		"train_labels": train_labels,
