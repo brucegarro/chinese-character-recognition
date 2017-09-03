@@ -7,7 +7,7 @@ import os
 from os.path import join
 from six.moves import cPickle as pickle
 
-import local
+from settings import local
 from hsk import vocab
 
 img_size = 224 # must be a multiple of 32 to work with maxpooling in vgg16
