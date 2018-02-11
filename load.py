@@ -11,7 +11,7 @@ import os
 from os.path import join
 from six.moves import cPickle as pickle
 
-from settings import local
+import settings
 from hsk import vocab
 
 IMG_SIZE = 224 # must be a multiple of 32 to work with maxpooling in vgg16
@@ -21,7 +21,7 @@ VALID_SET_SIZE = 0.3
 TEST_SET_SIZE = 0.2
 
 def write_image(tag_name, image, writer):
-	writer_path = join(local.COMPETITION_GNT_PATH, writer)
+	writer_path = join(settings.COMPETITION_GNT_PATH, writer)
 	if not os.path.exists(writer_path):
 		os.mkdir(writer_path)
 	output_path = join(writer_path, "%s.bmp" % tag_name)
@@ -55,9 +55,9 @@ def get_classes(hsk_levels=(1,2,3,4,5,6)):
 	# Not all writers have written examples for every classes so
 	# determine the classes which are present for all writers
 	classes = None
-	bmps_directories = [ f for f in os.listdir(local.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ]
+	bmps_directories = [ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ]
 	for name in bmps_directories:
-		filepath = join(local.COMPETITION_GNT_PATH, name.strip(".gnt"))
+		filepath = join(settings.COMPETITION_GNT_PATH, name.strip(".gnt"))
 		class_names = set([ sub_name.strip(".bmp") for sub_name in os.listdir(filepath) if sub_name.endswith(".bmp") ])
 		if classes == None:
 			classes = class_names
@@ -102,10 +102,10 @@ def bmps_to_pickle():
 
 	train_i = valid_i = test_i = 0
 
-	bmps_directories = sorted([ f for f in os.listdir(local.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
+	bmps_directories = sorted([ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
 	for name in bmps_directories:
 		print "author: %s" % name
-		bmps_directory = join(local.COMPETITION_GNT_PATH, name)
+		bmps_directory = join(settings.COMPETITION_GNT_PATH, name)
 		bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
 		try:
 			assert len(bmps_names) == num_classes
@@ -113,7 +113,7 @@ def bmps_to_pickle():
 			raise Exception("Expected %s bmps in folder %s, only found %s" % (num_classes, bmps_directory, len(bmps_names)))
 		np.random.shuffle(bmps_names)
 		for i, sub_name in enumerate(bmps_names):
-			bmp_path = join(local.COMPETITION_GNT_PATH, name, sub_name)
+			bmp_path = join(settings.COMPETITION_GNT_PATH, name, sub_name)
 			class_char = sub_name.strip(".bmp")
 			img = open_image_as_array(bmp_path)
 			if i < (TRAIN_SET_SIZE*num_classes):
@@ -144,12 +144,19 @@ def bmps_to_pickle():
 	}
 
 	# import ipdb; ipdb.set_trace()
-	output_path = join(local.COMPETITION_GNT_PATH, "hsk_100_dataset.pickle")
+	output_path = join(settings.HSK_100_PICKLE_PATH, "hsk_100_dataset.pickle")
 	f = open(output_path, "wb")
 	pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
+	print "pickle written to: %s" % output_path
 	f.close()
 
 def reformat(data, labels, num_channels=1):
+	"""
+	Format
+	-------
+		data: (N, IMG_SIZE, IMG_SIZE, num_channels)
+		labels: (N, num_labels)
+	"""
 	_, x_size, y_size = data.shape
 
 	args = (-1, x_size, y_size, num_channels)
@@ -159,14 +166,30 @@ def reformat(data, labels, num_channels=1):
 	labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
 	return data, labels
 
-def load_hsk_data():
-	with open(local.HSK_DATA_PATH, "rb") as f:
+def load_hsk_100_data():
+	"""
+	Format
+	------
+		train_data, train_label: (3000, 224, 224, 1), (3000, 100)
+		valid_data, valid_label: (1800, 224, 224, 1), (1800, 100)
+		test_data, test_label: (1200, 224, 224, 1), (1200, 100)
+	"""
+	with open(settings.HSK_100_PICKLE_PATH, "rb") as f:
 		 data = pickle.load(f)
-	return data
+	
+	train_data, train_labels = reformat(data["train_data"], data["train_labels"])
+	valid_data, valid_labels = reformat(data["valid_data"], data["valid_labels"])
+	test_data, test_labels = reformat(data["test_data"], data["test_labels"])
+
+	return (
+		(train_data, train_labels),
+		(valid_data, valid_labels),
+		(test_data, test_labels),
+	)
 
 def write_all_gnts_to_bmps():
-	gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
-	bmps_filepaths = [ join(local.COMPETITION_GNT_PATH, name) for name in gnt_names ]
+	gnt_names = [ name for name in os.listdir(settings.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
+	bmps_filepaths = [ join(settings.COMPETITION_GNT_PATH, name) for name in gnt_names ]
 	for bmp_path in bmps_filepaths:
 		write_gnt_to_bmps(bmp_path)
 
