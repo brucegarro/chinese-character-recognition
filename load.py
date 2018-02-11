@@ -81,14 +81,15 @@ def open_image_as_array(filepath):
 def bmps_to_pickle():
 	classes = get_classes(hsk_levels=(1,2,3))
 	num_classes = 100
+	number_of_authors = 60
 	classes = classes[:num_classes]
 	class_labels = {label: i for i, label in enumerate(classes)}
-	number_of_authors = 60
 	
-	train_size = num_classes*number_of_authors*TRAIN_SET_SIZE
-	valid_size = num_classes*number_of_authors*VALID_SET_SIZE
-	test_size = num_classes*number_of_authors*TEST_SET_SIZE
+	train_size = int(num_classes*number_of_authors*TRAIN_SET_SIZE)
+	valid_size = int(num_classes*number_of_authors*VALID_SET_SIZE)
+	test_size = int(num_classes*number_of_authors*TEST_SET_SIZE)
 
+	# import ipdb; ipdb.set_trace()
 	train_data = np.ndarray((train_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
 	valid_data = np.ndarray((valid_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
 	test_data = np.ndarray((test_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
@@ -160,16 +161,15 @@ def load_hsk_data():
 		 data = pickle.load(f)
 	return data
 
-def main():
-	# # Produce bmps
-	# for bmps_filepath in bmps_filepaths:
-
+def write_all_gnts_to_bmps():
 	gnt_names = [ name for name in os.listdir(local.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
 	bmps_filepaths = [ join(local.COMPETITION_GNT_PATH, name) for name in gnt_names ]
 	for bmp_path in bmps_filepaths:
 		write_gnt_to_bmps(bmp_path)
 
-	# bmps_to_pickle()
+def main():
+	# write_all_gnts_to_bmps()
+	bmps_to_pickle()
 
 if __name__=="__main__":
 	main()
