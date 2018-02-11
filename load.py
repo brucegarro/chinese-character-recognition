@@ -1,3 +1,7 @@
+"""
+Produces folders with bmps generated of the HWDB1.1 Chinese character dataset of gnt files
+"""
+
 import struct
 import scipy.misc
 import numpy as np
@@ -10,7 +14,11 @@ from six.moves import cPickle as pickle
 import local
 from hsk import vocab
 
-img_size = 224 # must be a multiple of 32 to work with maxpooling in vgg16
+IMG_SIZE = 224 # must be a multiple of 32 to work with maxpooling in vgg16
+
+TRAIN_SET_SIZE = 0.5
+VALID_SET_SIZE = 0.3
+TEST_SET_SIZE = 0.2
 
 def write_image(tag_name, image, writer):
 	writer_path = join(local.COMPETITION_GNT_PATH, writer)
@@ -38,7 +46,7 @@ def write_gnt_to_bmps(bmps_filepath):
 			bytez = struct.unpack("{}B".format(height*width), raw_bytes)
 
 			image = np.array(bytez).reshape(height, width)
-			image = scipy.misc.imresize(image, (img_size, img_size))
+			image = scipy.misc.imresize(image, (IMG_SIZE, IMG_SIZE))
 
 			writer  = bmps_filepath.split("/")[-1].split(".")[0]
 			write_image(tag_name, image, writer)
@@ -70,10 +78,6 @@ def open_image_as_array(filepath):
 				img[i][j] = (img[i][j]/255.0) - 0.5
 	return img
 
-TRAIN_SET_SIZE = 0.5
-VALID_SET_SIZE = 0.3
-TEST_SET_SIZE = 0.2
-
 def bmps_to_pickle():
 	classes = get_classes(hsk_levels=(1,2,3))
 	num_classes = 100
@@ -85,9 +89,9 @@ def bmps_to_pickle():
 	valid_size = num_classes*number_of_authors*VALID_SET_SIZE
 	test_size = num_classes*number_of_authors*TEST_SET_SIZE
 
-	train_data = np.ndarray((train_size, img_size, img_size), dtype=np.float32)
-	valid_data = np.ndarray((valid_size, img_size, img_size), dtype=np.float32)
-	test_data = np.ndarray((test_size, img_size, img_size), dtype=np.float32)
+	train_data = np.ndarray((train_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
+	valid_data = np.ndarray((valid_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
+	test_data = np.ndarray((test_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
 	train_labels = np.ndarray(train_size, dtype=np.int32)
 	valid_labels = np.ndarray(valid_size, dtype=np.int32)
 	test_labels = np.ndarray(test_size, dtype=np.int32)
