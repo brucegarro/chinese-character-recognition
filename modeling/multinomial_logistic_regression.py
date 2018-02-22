@@ -40,7 +40,9 @@ def multinomial_logistic_regression_model():
 	y = tf.placeholder(tf.float32, [None, num_labels])
 
 	# Set model weights
-	W = tf.Variable(tf.truncated_normal([img_pixel_count, num_labels], stddev=0.01))
+	initializer = tf.contrib.layers.xavier_initializer()
+	# W = tf.Variable(tf.truncated_normal([img_pixel_count, num_labels], stddev=0.01))
+	W = tf.Variable(initializer((img_pixel_count, num_labels)))
 	b = tf.Variable(tf.zeros([num_labels]))
 
 	# Construct Model
