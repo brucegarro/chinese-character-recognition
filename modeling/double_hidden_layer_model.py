@@ -39,12 +39,14 @@ def double_hidden_layer_convolutional_model():
 	# Parameters
 	i1, k1, s1, p1 = (img_size, 3, 1, 1)
 	o1 = conv_output_width(i1, k1, s1, p1)
+	kernal_n1 = 32
 
 	pool_k1, pool_s1 = (2, 2)
 	pool_o1 = pool_output_width(o1, pool_k1, pool_s1)
 
 	i2, k2, s2, p2 = (pool_o1, 3, 1, 1)
 	o2 = conv_output_width(i2, k2, s2, p2)
+	kernal_n2 = 64
 
 	pool_k2, pool_s2 = (2, 2)
 	pool_o2 = pool_output_width(o2, pool_k2, pool_s2)
@@ -57,17 +59,14 @@ def double_hidden_layer_convolutional_model():
 	X = tf.placeholder(tf.float32, shape=(None, IMG_SIZE, IMG_SIZE, num_channels))
 	Y = tf.placeholder(tf.float32, shape=(None, num_labels))
 
-	w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, 224], stddev=0.01))
-	b1 = tf.Variable(tf.zeros([o1]))
+	w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
+	b1 = tf.Variable(tf.zeros([kernal_n1]))
 	
 	# TODO: Why does o2*2 work here?
-	w2 = tf.Variable(tf.truncated_normal([k2, k2, o1, 224], stddev=0.01))
-	b2 = tf.Variable(tf.zeros([o2*2]))
-	
-	input_size3 = img_pixel_count // 4 * img_pixel_count // 4 * o1 * 2 * 2
-	input_size3 = (IMG_SIZE // 4) * (IMG_SIZE // 4)
+	w2 = tf.Variable(tf.truncated_normal([k2, k2, kernal_n1, kernal_n2], stddev=0.01))
+	b2 = tf.Variable(tf.zeros([kernal_n2]))
 
-	w3 = tf.Variable(tf.truncated_normal([ pool_o2 * pool_o2 * o2*2, fully_connected_n ], stddev=0.01))
+	w3 = tf.Variable(tf.truncated_normal([ pool_o2 * pool_o2 * kernal_n2, fully_connected_n ], stddev=0.01))
 	b3 = tf.Variable(tf.constant(1.0, shape=[fully_connected_n]))
 	
 	w4 = tf.Variable(tf.truncated_normal([fully_connected_n, num_labels], stddev=0.01))
@@ -79,15 +78,11 @@ def double_hidden_layer_convolutional_model():
 		activation1 = tf.nn.relu(conv1 + b1)
 		pool1 = tf.nn.max_pool(activation1, ksize=[1, pool_k1, pool_k1, 1], strides=[1, pool_s1, pool_s1, 1], padding="SAME")
 		
-		
 		conv2 = tf.nn.conv2d(pool1, w2, [1, s2, s2, 1], padding="SAME")
 		activation2 = tf.nn.relu(conv2 + b2)
 		pool2 = tf.nn.max_pool(activation2, ksize=[1, pool_k2, pool_k2, 1], strides=[1, pool_s2, pool_s2, 1], padding="SAME")
 
 		# Fully-connected Layer
-		# import ipdb; ipdb.set_trace()
-		# fc1_size = np.prod(pool2.shape.as_list())
-		# fc1 = tf.reshape(pool2, (-1, fc1_size))
 		fc1 = tf.reshape(pool2, [-1, w3.get_shape().as_list()[0]])
 
 		fc1 = tf.add(tf.matmul(fc1, w3), b3)
@@ -98,7 +93,6 @@ def double_hidden_layer_convolutional_model():
 		output = tf.add(tf.matmul(fc1, w4), b4)
 		
 		return output
-
 
 	softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
 	cost = tf.reduce_mean(softmax)
