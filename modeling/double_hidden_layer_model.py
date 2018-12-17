@@ -51,17 +51,17 @@ def double_hidden_layer_convolutional_model():
 
 	fully_connected_n = 1024
 	
-
-	tf_train_data = tf.placeholder(tf.float32, shape=(batch_size, IMG_SIZE, IMG_SIZE, num_channels))
-	tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, num_labels))
 	tf_valid_data = tf.constant(valid_data)
 	tf_test_data = tf.constant(test_data)
 
-	w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, o1], stddev=0.01))
+	X = tf.placeholder(tf.float32, shape=(None, IMG_SIZE, IMG_SIZE, num_channels))
+	Y = tf.placeholder(tf.float32, shape=(None, num_labels))
+
+	w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, 224], stddev=0.01))
 	b1 = tf.Variable(tf.zeros([o1]))
 	
 	# TODO: Why does o2*2 work here?
-	w2 = tf.Variable(tf.truncated_normal([k2, k2, o1, o2*2], stddev=0.01))
+	w2 = tf.Variable(tf.truncated_normal([k2, k2, o1, 224], stddev=0.01))
 	b2 = tf.Variable(tf.zeros([o2*2]))
 	
 	input_size3 = img_pixel_count // 4 * img_pixel_count // 4 * o1 * 2 * 2
@@ -100,7 +100,7 @@ def double_hidden_layer_convolutional_model():
 		return output
 
 
-	softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(tf_train_data), labels=tf_train_labels)
+	softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
 	cost = tf.reduce_mean(softmax)
 	optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
 	
@@ -121,8 +121,8 @@ def double_hidden_layer_convolutional_model():
 					batch_idx = np.random.randint(num_samples, size=batch_size)
 					batch_x, batch_y = train_data[batch_idx], train_labels[batch_idx]
 					_, c = sess.run([optimizer, cost], feed_dict={
-						tf_train_data: batch_x,
-						tf_train_labels: batch_y
+						X: batch_x,
+						Y: batch_y
 					})
 					avg_cost += c / total_batch
 
@@ -130,12 +130,12 @@ def double_hidden_layer_convolutional_model():
 					print "Epoch: %s, cost: %s" % ((epoch+1), avg_cost)
 
 				# Test model
-				correct_predictions = tf.equal(tf.argmax(softmax, 1), tf.argmax(tf_train_labels, 1))
+				correct_predictions = tf.equal(tf.argmax(softmax, 1), tf.argmax(Y, 1))
 				accuracy = (
 					tf.reduce_mean(tf.cast(softmax, tf.float32))
 					  .eval({
-						tf_train_data: valid_data,
-						tf_train_data: valid_labels
+						X: valid_data,
+						Y: valid_labels
 					})
 				)
 				print "Validation Accuracy: %s" % accuracy
