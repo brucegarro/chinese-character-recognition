@@ -19,10 +19,6 @@ def double_hidden_layer_convolutional_model():
 		(test_data, test_labels),
 	) = load_hsk_100_data()
 
-	print "Training set: %s, %s" % (train_data.shape, train_labels.shape)
-	print "Validation set: %s, %s" % (valid_data.shape, valid_labels.shape)
-	print "Test set: %s, %s" % (test_data.shape, test_labels.shape)
-
 	num_samples = train_data.shape[0] # 3000
 	img_size = train_data.shape[1] # 224
 	img_pixel_count = img_size**2 # 50176
@@ -35,6 +31,12 @@ def double_hidden_layer_convolutional_model():
 	training_epochs = 25
 	batch_size = 16
 	display_steps = 1
+
+	print "Training set: %s, %s" % (train_data.shape, train_labels.shape)
+	print "Validation set: %s, %s" % (valid_data.shape, valid_labels.shape)
+	print "Test set: %s, %s" % (test_data.shape, test_labels.shape)
+	print "Sample size: %s" % num_samples
+	print "Batch size: %s" % batch_size
 
 	# Parameters
 	i1, k1, s1, p1 = (img_size, 3, 1, 1)
@@ -97,15 +99,21 @@ def double_hidden_layer_convolutional_model():
 	softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
 	cost = tf.reduce_mean(softmax)
 	optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
-	
-	# train_prediction = tf.nn.softmax(model(tf_train_data))
-	# valid_prediction = tf.nn.softmax(model(tf_valid_data))
-	# test_prediction = tf.nn.softmax(model(tf_test_data))
 
+	# Runtime configurations
 	init = tf.global_variables_initializer()
 
-	with tf.Session() as sess:
-		sess.run(init)
+	options = tf.RunOptions()
+	options.output_partition_graphs = True
+	options.report_tensor_allocations_upon_oom = True
+	options.trace_level = tf.RunOptions.FULL_TRACE
+
+	gpu_usage_limit = 0.75
+	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_usage_limit)
+
+	with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
+		metadata = tf.RunMetadata()
+		sess.run(init, options=options)
 		
 		for epoch in range(training_epochs):
 				avg_cost = 0.0 # aggregation variable
@@ -124,12 +132,15 @@ def double_hidden_layer_convolutional_model():
 					print "Epoch: %s, cost: %s" % ((epoch+1), avg_cost)
 
 				# Test model
-				correct_predictions = tf.equal(tf.argmax(softmax, 1), tf.argmax(Y, 1))
+				correct_predictions = tf.equal(tf.argmax(softmax, -1), tf.argmax(Y, -1))
+
+				# TODO: implement accuracy over all batches here.
+				validation_batch_size = 100
 				accuracy = (
-					tf.reduce_mean(tf.cast(softmax, tf.float32))
+					tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
 					  .eval({
-						X: valid_data,
-						Y: valid_labels
+						X: valid_data[:validation_batch_size, :],
+						Y: valid_labels[:validation_batch_size, :]
 					})
 				)
 				print "Validation Accuracy: %s" % accuracy

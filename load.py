@@ -146,7 +146,7 @@ def bmps_to_pickle():
 	}
 
 	# import ipdb; ipdb.set_trace()
-	output_path = join(settings.HSK_100_PICKLE_PATH, "hsk_100_dataset.pickle")
+	output_path = settings.HSK_100_PICKLE_PATH
 	f = open(output_path, "wb")
 	pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
 	print "pickle written to: %s" % output_path
