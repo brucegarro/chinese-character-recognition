@@ -131,18 +131,26 @@ def double_hidden_layer_convolutional_model():
 				if ((epoch+1) % display_steps) == 0:
 					print "Epoch: %s, cost: %s" % ((epoch+1), avg_cost)
 
-				# Test model
 				correct_predictions = tf.equal(tf.argmax(softmax, -1), tf.argmax(Y, -1))
 
-				# TODO: implement accuracy over all batches here.
-				validation_batch_size = 100
-				accuracy = (
-					tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
-					  .eval({
-						X: valid_data[:validation_batch_size, :],
-						Y: valid_labels[:validation_batch_size, :]
-					})
-				)
+				# Validate model
+				accuracy_batch_size = 100
+				validation_size = valid_data.shape[0]
+				accuracy_batches = int(validation_size/accuracy_batch_size)
+				
+				batch_accuracies = []
+				for i in range(accuracy_batches):
+					acc_batch_idx = np.random.randint(validation_size, size=accuracy_batch_size)
+					acc_batch_x, acc_batch_y = valid_data[acc_batch_idx], valid_labels[acc_batch_idx]
+					batch_accuracies.append(
+						tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+						  .eval({
+							X: acc_batch_x,
+							Y: acc_batch_y
+						})
+					)
+				accuracy = np.average(batch_accuracies)
+
 				print "Validation Accuracy: %s" % accuracy
 				print ""
 
