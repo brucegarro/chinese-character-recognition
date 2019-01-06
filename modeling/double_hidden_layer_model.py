@@ -26,10 +26,10 @@ def double_hidden_layer_convolutional_model():
 	num_channels = 1
 
 	# Hyperparameters
-	dropout_rate = 0.75
-	learning_rate = 0.01
+	dropout_rate = 0.5
+	learning_rate = 0.005
 	training_epochs = 25
-	batch_size = 16
+	batch_size = 50
 	display_steps = 1
 
 	print "Training set: %s, %s" % (train_data.shape, train_labels.shape)
@@ -39,7 +39,7 @@ def double_hidden_layer_convolutional_model():
 	print "Batch size: %s" % batch_size
 
 	# Parameters
-	i1, k1, s1, p1 = (img_size, 3, 1, 1)
+	i1, k1, s1, p1 = (img_size, 5, 1, 2)
 	o1 = conv_output_width(i1, k1, s1, p1)
 	kernal_n1 = 32
 
@@ -54,6 +54,23 @@ def double_hidden_layer_convolutional_model():
 	pool_o2 = pool_output_width(o2, pool_k2, pool_s2)
 
 	fully_connected_n = 1024
+	fc1_size = pool_o2 * pool_o2 * kernal_n2
+
+	print "i1, k1, s1, p1: (%s, %s, %s, %s)" % (i1, k1, s1, p1)
+	print "o1: %s" % o1
+	print "kernal_n1: %s\n" % kernal_n1
+
+	print "pool_k1, pool_s1: (%s, %s)" % (pool_k1, pool_s1)
+	print "pool_o1: %s\n" % pool_o1
+
+	print "i2, k2, s2, p2: (%s, %s, %s, %s)" % (i2, k2, s2, p2)
+	print "o2: %s" % o2
+	print "kernal_n2: %s\n" % kernal_n2
+
+	print "pool_k2, pool_s2: (%s, %s)" % (pool_k2, pool_s2)
+	print "pool_o2: %s\n" % pool_o2
+
+	print "fc1_size: %s\n" % fc1_size	
 	
 	tf_valid_data = tf.constant(valid_data)
 	tf_test_data = tf.constant(test_data)
@@ -68,7 +85,10 @@ def double_hidden_layer_convolutional_model():
 	w2 = tf.Variable(tf.truncated_normal([k2, k2, kernal_n1, kernal_n2], stddev=0.01))
 	b2 = tf.Variable(tf.zeros([kernal_n2]))
 
-	w3 = tf.Variable(tf.truncated_normal([ pool_o2 * pool_o2 * kernal_n2, fully_connected_n ], stddev=0.01))
+
+
+	w3 = tf.Variable(tf.truncated_normal([ fc1_size, fully_connected_n ], stddev=0.01))
+	# w3 = tf.Variable(tf.truncated_normal([ None, fully_connected_n ], stddev=0.01))
 	b3 = tf.Variable(tf.constant(1.0, shape=[fully_connected_n]))
 	
 	w4 = tf.Variable(tf.truncated_normal([fully_connected_n, num_labels], stddev=0.01))
@@ -86,6 +106,7 @@ def double_hidden_layer_convolutional_model():
 
 		# Fully-connected Layer
 		fc1 = tf.reshape(pool2, [-1, w3.get_shape().as_list()[0]])
+		fc1 = tf.reshape(pool2, [-1, (fc1_size, fully_connected_n)])
 
 		fc1 = tf.add(tf.matmul(fc1, w3), b3)
 		fc1 = tf.nn.relu(fc1)
