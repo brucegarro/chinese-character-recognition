@@ -10,9 +10,6 @@ def accuracy(predictions, labels):
 
 
 def multi_conv_model():
-    """
-    Using this example as guidance: https://github.com/aymericdamien/TensorFlow-Examples/blob/master/notebooks/3_NeuralNetworks/convolutional_network_raw.ipynb
-    """
     (
         (train_data, train_labels),
         (valid_data, valid_labels),
@@ -46,7 +43,7 @@ def multi_conv_model():
     pool_k1, pool_s1 = (2, 2)
     pool_o1 = pool_output_width(o1, pool_k1, pool_s1)
 
-    i2, k2, s2, p2 = (pool_o1, 7, 1, 3)
+    i2, k2, s2, p2 = (pool_o1, 8, 2, 3)
     o2 = conv_output_width(i2, k2, s2, p2)
     kernal_n2 = 64
 
@@ -60,7 +57,7 @@ def multi_conv_model():
     pool_k3, pool_s3 = (2, 2)
     pool_o3 = pool_output_width(o3, pool_k3, pool_s3)
 
-    i4, k4, s4, p4 = (pool_o3, 3, 1, 1)
+    i4, k4, s4, p4 = (pool_o3, 3, 1, 2)
     o4 = conv_output_width(i4, k4, s4, p4)
     kernal_n4 = 256
 

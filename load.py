@@ -71,6 +71,10 @@ def get_classes(hsk_levels=(1,2,3,4,5,6)):
 
 	return sorted(list(classes))
 
+def get_hsk_100_classes():
+	"""The set of classes used for models trained on 100-classes"""
+	classes = get_classes(hsk_levels=(1,2,3))[:100]
+	return classes
 
 def open_image_as_array(filepath):
 	with open(filepath, "rb") as f:
@@ -81,7 +85,7 @@ def open_image_as_array(filepath):
 	return img
 
 def bmps_to_pickle():
-	classes = get_classes(hsk_levels=(1,2,3))
+	classes = get_hsk_100_classes()
 	num_classes = 100
 	number_of_authors = 60
 	classes = classes[:num_classes]
@@ -104,9 +108,14 @@ def bmps_to_pickle():
 
 	train_i = valid_i = test_i = 0
 
+
 	bmps_directories = sorted([ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
 	for name in bmps_directories:
-		print "author: %s" % name
+		print "\nauthor: %s" % name
+		training_chars = []
+		valid_chars = []
+		test_chars = []
+		
 		bmps_directory = join(settings.COMPETITION_GNT_PATH, name)
 		bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
 		try:
@@ -119,17 +128,23 @@ def bmps_to_pickle():
 			class_char = sub_name.strip(".bmp")
 			img = open_image_as_array(bmp_path)
 			if i < (TRAIN_SET_SIZE*num_classes):
+				training_chars.append(class_char)
 				np.copyto(train_data[train_i], img)
 				train_labels[train_i] = class_labels[class_char]
 				train_i += 1
 			elif (TRAIN_SET_SIZE*num_classes) <= i < ((TRAIN_SET_SIZE+VALID_SET_SIZE)*num_classes):
+				valid_chars.append(class_char)
 				np.copyto(valid_data[valid_i], img)
 				valid_labels[valid_i] = class_labels[class_char]
 				valid_i += 1
 			else:
+				test_chars.append(class_char)
 				np.copyto(test_data[test_i], img)
 				test_labels[test_i] = class_labels[class_char]
 				test_i += 1
+		print u"training_chars: %s".encode("utf-8") % " ".join(sorted(training_chars))
+		print u"valid_chars: %s".encode("utf-8") % " ".join(sorted(valid_chars))
+		print u"test_chars: %s".encode("utf-8") % " ".join(sorted(test_chars))
 
 
 	assert train_i == train_size
