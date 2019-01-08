@@ -103,14 +103,15 @@ def bmps_to_pickle():
 	valid_labels = np.ndarray(valid_size, dtype=np.int32)
 	test_labels = np.ndarray(test_size, dtype=np.int32)
 
-	random_indexes = list(np.arange(train_size+valid_size+test_size))
-	np.random.shuffle(random_indexes)
+	random_author_indexes = list(np.arange(number_of_authors))
+	np.random.seed(0)
+	np.random.shuffle(random_author_indexes)
 
 	train_i = valid_i = test_i = 0
 
-
 	bmps_directories = sorted([ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
-	for name in bmps_directories:
+
+	for author_i, name in zip(random_author_indexes, bmps_directories):
 		print "\nauthor: %s" % name
 		training_chars = []
 		valid_chars = []
@@ -122,17 +123,17 @@ def bmps_to_pickle():
 			assert len(bmps_names) == num_classes
 		except AssertionError:
 			raise Exception("Expected %s bmps in folder %s, only found %s" % (num_classes, bmps_directory, len(bmps_names)))
-		np.random.shuffle(bmps_names)
-		for i, sub_name in enumerate(bmps_names):
+		
+		for sub_name in bmps_names:
 			bmp_path = join(settings.COMPETITION_GNT_PATH, name, sub_name)
 			class_char = sub_name.strip(".bmp")
 			img = open_image_as_array(bmp_path)
-			if i < (TRAIN_SET_SIZE*num_classes):
+			if author_i < (TRAIN_SET_SIZE*number_of_authors):
 				training_chars.append(class_char)
 				np.copyto(train_data[train_i], img)
 				train_labels[train_i] = class_labels[class_char]
 				train_i += 1
-			elif (TRAIN_SET_SIZE*num_classes) <= i < ((TRAIN_SET_SIZE+VALID_SET_SIZE)*num_classes):
+			elif (TRAIN_SET_SIZE*number_of_authors) <= author_i < ((TRAIN_SET_SIZE+VALID_SET_SIZE)*number_of_authors):
 				valid_chars.append(class_char)
 				np.copyto(valid_data[valid_i], img)
 				valid_labels[valid_i] = class_labels[class_char]
