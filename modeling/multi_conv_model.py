@@ -190,8 +190,14 @@ def multi_conv_model():
                 accuracy_batches = int(validation_size/accuracy_batch_size)
                 
                 batch_accuracies = []
+                # Randomized indexes
+                acc_idx = np.random.randint(validation_size, size=validation_size)
+                
                 for i in range(accuracy_batches):
-                    acc_batch_idx = np.random.randint(validation_size, size=accuracy_batch_size)
+                    start_idx = accuracy_batch_size * i
+                    end_idx = accuracy_batch_size * (i+1)
+                    acc_batch_idx = acc_idx[start_idx:end_idx]
+
                     acc_batch_x, acc_batch_y = valid_data[acc_batch_idx], valid_labels[acc_batch_idx]
                     batch_accuracies.append(
                         tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
