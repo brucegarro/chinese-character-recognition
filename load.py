@@ -194,9 +194,6 @@ def reformat(data, labels, num_channels=1, padding=16):
     )
     data = np.pad(data, padding_dim, constant_values=white_value, mode="constant")
 
-    # Standardize images with image mean subtraction
-    # data = tf.map_fn(lambda img: tf.image.per_image_standardization(img), data)
-
     num_labels = len(set(labels))
     labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
     return data, labels

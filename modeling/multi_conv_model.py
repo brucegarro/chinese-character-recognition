@@ -17,8 +17,8 @@ def multi_conv_model():
     ) = load_hsk_100_data()
 
     num_samples = train_data.shape[0] # 3000
-    img_size = train_data.shape[1] # 224
-    img_pixel_count = img_size**2 # 50176
+    img_size = train_data.shape[1]
+    img_pixel_count = img_size**2
     num_labels = train_labels.shape[1] # 100
     num_channels = 1
 
@@ -108,7 +108,9 @@ def multi_conv_model():
     tf_valid_data = tf.constant(valid_data)
     tf_test_data = tf.constant(test_data)
 
-    X = tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels))
+    X = tf.map_fn(lambda img: tf.image.per_image_standardization(img), 
+            tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels)
+    ))
     Y = tf.placeholder(tf.float32, shape=(None, num_labels))
 
     w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
