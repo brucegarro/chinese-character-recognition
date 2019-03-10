@@ -183,15 +183,16 @@ def reformat(data, labels, num_channels=1, padding=16):
 
 	args = (-1, x_size, y_size, num_channels)
 	data = data.reshape(args).astype(np.float32)
+	
 	# Add white padding to images
-	white_value = 0.5
-	padding_dim = (
-		(0, 0), # number of samples
-		(padding, padding), # X dim
-		(padding, padding), # y dim
-		(0, 0) # channel dim
-	)
-	data = np.pad(data, padding_dim, constant_values=white_value, mode="constant")
+	# white_value = 0.5
+	# padding_dim = (
+	# 	(0, 0), # number of samples
+	# 	(padding, padding), # X dim
+	# 	(padding, padding), # y dim
+	# 	(0, 0) # channel dim
+	# )
+	# data = np.pad(data, padding_dim, constant_values=white_value, mode="constant")
 
 
 	# Standardize images with image mean subtraction
