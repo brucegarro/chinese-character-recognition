@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from load import load_hsk_100_data, reformat, IMG_SIZE
+from load import load_hsk_100_data, reformat
 from utils import conv_output_width, pool_output_width
 
 
@@ -22,6 +22,17 @@ def multi_conv_model():
     num_labels = train_labels.shape[1] # 100
     num_channels = 1
 
+    print "Datasets"
+    print "Training set: %s, %s" % (train_data.shape, train_labels.shape)
+    print "Validation set: %s, %s" % (valid_data.shape, valid_labels.shape)
+    print "Test set: %s, %s" % (test_data.shape, test_labels.shape)
+    print "num_samples: %s" % num_samples
+    print "img_size: %s" % img_size
+    print "img_pixel_count: %s" % img_pixel_count
+    print "num_labels: %s" % num_labels
+    print "num_channels: %s" % num_channels
+    print ""
+
     # Hyperparameters
     dropout_rate = 0.5
     learning_rate = 0.005
@@ -29,11 +40,12 @@ def multi_conv_model():
     batch_size = 50
     display_steps = 1
 
-    print "Training set: %s, %s" % (train_data.shape, train_labels.shape)
-    print "Validation set: %s, %s" % (valid_data.shape, valid_labels.shape)
-    print "Test set: %s, %s" % (test_data.shape, test_labels.shape)
-    print "Sample size: %s" % num_samples
-    print "Batch size: %s" % batch_size
+    print "Hyperparameters"
+    print "dropout_rate: %s" % dropout_rate
+    print "learning_rate: %s" % learning_rate
+    print "training_epochs: %s" % training_epochs
+    print "batch_size: %s" % batch_size
+    print ""
 
     # Parameters
     i1, k1, s1, p1 = (img_size, 10, 2, 4)
@@ -50,7 +62,7 @@ def multi_conv_model():
     pool_k2, pool_s2 = (2, 2)
     pool_o2 = pool_output_width(o2, pool_k2, pool_s2)
 
-    i3, k3, s3, p3 = (pool_o2, 5, 1, 2)
+    i3, k3, s3, p3 = (pool_o2, 5, 1, 1)
     o3 = conv_output_width(i3, k3, s3, p3)
     kernal_n3 = 128
 
@@ -96,7 +108,7 @@ def multi_conv_model():
     tf_valid_data = tf.constant(valid_data)
     tf_test_data = tf.constant(test_data)
 
-    X = tf.placeholder(tf.float32, shape=(None, IMG_SIZE, IMG_SIZE, num_channels))
+    X = tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels))
     Y = tf.placeholder(tf.float32, shape=(None, num_labels))
 
     w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
