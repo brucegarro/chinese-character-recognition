@@ -10,6 +10,7 @@ from collections import defaultdict
 import os
 from os.path import join
 from six.moves import cPickle as pickle
+import tensorflow as tf
 
 import settings
 from hsk import vocab
@@ -87,15 +88,14 @@ def open_image_as_array(filepath):
 def bmps_to_pickle():
 	classes = get_hsk_100_classes()
 	num_classes = 100
-	number_of_authors = 60
 	classes = classes[:num_classes]
 	class_labels = {label: i for i, label in enumerate(classes)}
+	number_of_authors = 60
 	
 	train_size = int(num_classes*number_of_authors*TRAIN_SET_SIZE)
 	valid_size = int(num_classes*number_of_authors*VALID_SET_SIZE)
 	test_size = int(num_classes*number_of_authors*TEST_SET_SIZE)
 
-	# import ipdb; ipdb.set_trace()
 	train_data = np.ndarray((train_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
 	valid_data = np.ndarray((valid_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
 	test_data = np.ndarray((test_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
@@ -128,25 +128,30 @@ def bmps_to_pickle():
 			bmp_path = join(settings.COMPETITION_GNT_PATH, name, sub_name)
 			class_char = sub_name.strip(".bmp")
 			img = open_image_as_array(bmp_path)
+			label = class_labels[class_char]
+
+			print "sub_name: %s" % sub_name
+			print "img: %s" % img
+			print "label: %s\n" % label
+			
 			if author_i < (TRAIN_SET_SIZE*number_of_authors):
 				training_chars.append(class_char)
 				np.copyto(train_data[train_i], img)
-				train_labels[train_i] = class_labels[class_char]
+				train_labels[train_i] = label
 				train_i += 1
 			elif (TRAIN_SET_SIZE*number_of_authors) <= author_i < ((TRAIN_SET_SIZE+VALID_SET_SIZE)*number_of_authors):
 				valid_chars.append(class_char)
 				np.copyto(valid_data[valid_i], img)
-				valid_labels[valid_i] = class_labels[class_char]
+				valid_labels[valid_i] = label
 				valid_i += 1
 			else:
 				test_chars.append(class_char)
 				np.copyto(test_data[test_i], img)
-				test_labels[test_i] = class_labels[class_char]
+				test_labels[test_i] = label
 				test_i += 1
 		print u"training_chars: %s".encode("utf-8") % " ".join(sorted(training_chars))
 		print u"valid_chars: %s".encode("utf-8") % " ".join(sorted(valid_chars))
 		print u"test_chars: %s".encode("utf-8") % " ".join(sorted(test_chars))
-
 
 	assert train_i == train_size
 	assert valid_i == valid_size
