@@ -161,14 +161,13 @@ def bmps_to_pickle():
 		"test_labels": test_labels,
 	}
 
-	# import ipdb; ipdb.set_trace()
 	output_path = settings.HSK_100_PICKLE_PATH
 	f = open(output_path, "wb")
 	pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
 	print "pickle written to: %s" % output_path
 	f.close()
 
-def reformat(data, labels, num_channels=1):
+def reformat(data, labels, num_channels=1, padding=16):
 	"""
 	Format
 	-------
@@ -179,6 +178,19 @@ def reformat(data, labels, num_channels=1):
 
 	args = (-1, x_size, y_size, num_channels)
 	data = data.reshape(args).astype(np.float32)
+	# Add white padding to images
+	white_value = 0.5
+	padding_dim = (
+		(0, 0), # number of samples
+		(padding, padding), # X dim
+		(padding, padding), # y dim
+		(0, 0) # channel dim
+	)
+	data = np.pad(data, padding_dim, constant_values=white_value, mode="constant")
+
+
+	# Standardize images with image mean subtraction
+	# data = tf.map_fn(lambda img: tf.image.per_image_standardization(img), data)
 
 	num_labels = len(set(labels))
 	labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
