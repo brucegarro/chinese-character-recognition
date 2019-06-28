@@ -21,6 +21,9 @@ TRAIN_SET_SIZE = 0.5
 VALID_SET_SIZE = 0.3
 TEST_SET_SIZE = 0.2
 
+DEFAULT_NUMBER_OF_CLASSES = 100
+DEFAULT_HSK_LEVELS = (1, 2, 3)
+
 def write_image(tag_name, image, writer):
     writer_path = join(settings.COMPETITION_GNT_PATH, writer)
     if not os.path.exists(writer_path):
@@ -53,30 +56,6 @@ def write_gnt_to_bmps(bmps_filepath):
             writer  = bmps_filepath.split("/")[-1].split(".")[0]
             write_image(tag_name, image, writer)
 
-
-def get_classes(hsk_levels=(1,2,3,4,5,6)):
-    # Not all writers have written examples for every classes so
-    # determine the classes which are present for all writers
-    classes = None
-    bmps_directories = [ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ]
-    for name in bmps_directories:
-        filepath = join(settings.COMPETITION_GNT_PATH, name.strip(".gnt"))
-        class_names = set([ sub_name.strip(".bmp") for sub_name in os.listdir(filepath) if sub_name.endswith(".bmp") ])
-        if classes == None:
-            classes = class_names
-        else:
-            classes &= class_names
-
-    if hsk_levels:
-        classes = [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
-
-    return sorted(list(classes))
-
-def get_hsk_100_classes():
-    """The set of classes used for models trained on 100-classes"""
-    classes = get_classes(hsk_levels=(1,2,3))[:100]
-    return classes
-
 def open_image_as_array(filepath):
     with open(filepath, "rb") as f:
         img = scipy.misc.imread(f, flatten=True)
@@ -85,10 +64,32 @@ def open_image_as_array(filepath):
                 img[i][j] = (img[i][j]/255.0) - 0.5
     return img
 
-def bmps_to_pickle():
-    classes = get_hsk_100_classes()
-    num_classes = 100
-    classes = classes[:num_classes]
+def get_competition_bmp_directories():
+    return sorted([ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
+
+def get_all_classes():
+    # Not all writers have written examples for every classes so
+    # determine the classes which are present for all writers
+    classes = None
+    bmps_directories = get_competition_bmp_directories()
+    for name in bmps_directories:
+        filepath = join(settings.COMPETITION_GNT_PATH, name.strip(".gnt"))
+        class_names = set([ sub_name.strip(".bmp") for sub_name in os.listdir(filepath) if sub_name.endswith(".bmp") ])
+        if classes == None:
+            classes = class_names
+        else:
+            classes &= class_names
+    
+    sorted_classes = sorted(list(classes))
+
+    return sorted_classes
+
+def filter_classes_by_hsk_level(classes, hsk_levels=(1,2,3,4,5,6)):
+    return classes = [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
+
+def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK_LEVELS):
+    all_classes = get_all_classes()
+    classes = filter_classes_by_hsk_level(all_classes)[:num_classes]
     class_labels = {label: i for i, label in enumerate(classes)}
     number_of_authors = 60
     
@@ -109,7 +110,7 @@ def bmps_to_pickle():
 
     train_i = valid_i = test_i = 0
 
-    bmps_directories = sorted([ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
+    bmps_directories = get_competition_bmp_directories()
 
     for author_i, name in zip(random_author_indexes, bmps_directories):
         print "\nauthor: %s" % name
@@ -166,7 +167,10 @@ def bmps_to_pickle():
         "test_labels": test_labels,
     }
 
-    output_path = settings.HSK_100_PICKLE_PATH
+    # TODO: Remove the constant HSK_100_PICKLE_PATH and create this path within this function.
+    # below is a hack to get the name of the output path to reflect the correct number of classes.
+    output_path = settings.HSK_100_PICKLE_PATH.replace("100", str(num_classes))
+
     f = open(output_path, "wb")
     pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
     print "pickle written to: %s" % output_path
