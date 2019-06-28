@@ -130,9 +130,12 @@ def bmps_to_pickle():
             img = open_image_as_array(bmp_path)
             label = class_labels[class_char]
 
-            print "sub_name: %s" % sub_name
-            print "img: %s" % img
-            print "label: %s\n" % label
+            print "author, author_i, sub_name, label: (%s, %s, %s, %s)" % (
+                name,
+                author_i,
+                sub_name.strip(".bmp"),
+                label,
+            )
             
             if author_i < (TRAIN_SET_SIZE*number_of_authors):
                 training_chars.append(class_char)
