@@ -64,15 +64,40 @@ def open_image_as_array(filepath):
                 img[i][j] = (img[i][j]/255.0) - 0.5
     return img
 
-def get_competition_bmp_directories():
+def get_competition_author_directory_names():
+    """
+    In the COMPETITION_GNT_PATH get the bmp directory names. These directory names also server as the author names
+
+    Returns
+    -------
+    list: [str] - directory names (author names) e.g "C001-f-f"
+    """
     return sorted([ f for f in os.listdir(settings.COMPETITION_GNT_PATH) if (f.startswith("C") and f.endswith("f-f")) ])
 
+def get_bmp_path_for_directory_name(author_name, classes):
+    """
+    For a given author and set of classes, return the full paths of the bmp files.
+
+    Returns
+    -------
+    list: [str] - full file paths
+    """
+    bmps_directory = join(settings.COMPETITION_GNT_PATH, author_name)
+    bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
+    return bmps_names
+
 def get_all_classes():
-    # Not all writers have written examples for every classes so
-    # determine the classes which are present for all writers
+    """
+    Not all writers have written examples for every classes so
+    determine the classes which are present for all writers
+
+    Returns
+    -------
+    list: [str] - sorted list of authors
+    """
     classes = None
-    bmps_directories = get_competition_bmp_directories()
-    for name in bmps_directories:
+    author_directory_names = get_competition_author_directory_names()
+    for name in author_directory_names:
         filepath = join(settings.COMPETITION_GNT_PATH, name.strip(".gnt"))
         class_names = set([ sub_name.strip(".bmp") for sub_name in os.listdir(filepath) if sub_name.endswith(".bmp") ])
         if classes == None:
@@ -93,6 +118,11 @@ def filter_classes_by_hsk_level(classes, hsk_levels=(1,2,3,4,5,6)):
     list: [str] - classes (chinese characters)
     """
     return [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
+
+def get_image_arrays_for_author_directory_names(author_directory_names):
+    # TODO: create a function which has the role of fetching all array date for authors
+    # The goal is to eventually separate the roles of converting the data and doing the test splits
+    pass
 
 def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK_LEVELS):
     all_classes = get_all_classes()
@@ -117,29 +147,30 @@ def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK
 
     train_i = valid_i = test_i = 0
 
-    bmps_directories = get_competition_bmp_directories()
+    author_directory_names = get_competition_author_directory_names()
 
-    for author_i, name in zip(random_author_indexes, bmps_directories):
-        print "\nauthor: %s" % name
+    for author_i, author_name in zip(random_author_indexes, author_directory_names):
+        print "\nauthor_name: %s" % author_name
         training_chars = []
         valid_chars = []
         test_chars = []
         
-        bmps_directory = join(settings.COMPETITION_GNT_PATH, name)
-        bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
+        bmps_directory = join(settings.COMPETITION_GNT_PATH, author_name)
+        bmps_names = get_bmp_path_for_directory_name(author_name, classes)
         try:
             assert len(bmps_names) == num_classes
         except AssertionError:
             raise Exception("Expected %s bmps in folder %s, only found %s" % (num_classes, bmps_directory, len(bmps_names)))
         
         for sub_name in bmps_names:
-            bmp_path = join(settings.COMPETITION_GNT_PATH, name, sub_name)
+            bmp_path = join(settings.COMPETITION_GNT_PATH, author_name, sub_name)
             class_char = sub_name.strip(".bmp")
             img = open_image_as_array(bmp_path)
+            # img_as_array, label, author_name, (class_char optional)
             label = class_labels[class_char]
 
-            print "author, author_i, sub_name, label: (%s, %s, %s, %s)" % (
-                name,
+            print "author_name, author_i, sub_name, label: (%s, %s, %s, %s)" % (
+                author_name,
                 author_i,
                 sub_name.strip(".bmp"),
                 label,
