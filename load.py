@@ -85,7 +85,14 @@ def get_all_classes():
     return sorted_classes
 
 def filter_classes_by_hsk_level(classes, hsk_levels=(1,2,3,4,5,6)):
-    return classes = [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
+    """
+    Filters Chinese character classes by whether they are part of HSK vocabulary lists
+
+    Returns
+    -------
+    list: [str] - classes (chinese characters)
+    """
+    return [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
 
 def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK_LEVELS):
     all_classes = get_all_classes()
