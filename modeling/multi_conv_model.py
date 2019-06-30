@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from load import load_hsk_100_data, reformat
+from load import load_hsk_data, reformat
 from utils import conv_output_width, pool_output_width
 
 
@@ -10,11 +10,12 @@ def accuracy(predictions, labels):
 
 
 def multi_conv_model():
+    NUM_CLASSES = 10
     (
         (train_data, train_labels),
         (valid_data, valid_labels),
         (test_data, test_labels),
-    ) = load_hsk_100_data()
+    ) = load_hsk_data(num_classes=NUM_CLASSES)
 
     num_samples = train_data.shape[0] # 3000
     img_size = train_data.shape[1]

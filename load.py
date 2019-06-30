@@ -295,7 +295,7 @@ def load_hsk_data(num_classes):
         test_data, test_label: (1200, 224, 224, 1), (1200, 100)
     """
     filename = "hsk_%s_dataset.pickle" % num_classes
-    pickle_path = join(DATA_PATH, filename)
+    pickle_path = join(settings.DATA_PATH, filename)
     with open(settings.HSK_100_PICKLE_PATH, "rb") as f:
          data = pickle.load(f)
     
@@ -308,10 +308,6 @@ def load_hsk_data(num_classes):
         (valid_data, valid_labels),
         (test_data, test_labels),
     )
-
-def load_hsk_100_data():
-    num_classes = 100
-    load_hsk_data(num_classes)
 
 def write_all_gnts_to_bmps():
     gnt_names = [ name for name in os.listdir(settings.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from load import load_hsk_100_data, reformat, IMG_SIZE
+from load import load_hsk_data, reformat, IMG_SIZE
 
 def accuracy(predictions, labels):
 	return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
@@ -12,7 +12,7 @@ def multinomial_logistic_regression_model():
 		(train_data, train_labels),
 		(valid_data, valid_labels),
 		(test_data, test_labels),
-	) = load_hsk_100_data()
+	) = load_hsk_data(num_classes=100)
 
 	print "Training set: %s, %s" % (train_data.shape, train_labels.shape)
 	print "Validation set: %s, %s" % (valid_data.shape, valid_labels.shape)

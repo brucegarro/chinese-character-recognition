@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from load import load_hsk_100_data, reformat, IMG_SIZE
+from load import load_hsk_data, reformat, IMG_SIZE
 from utils import conv_output_width, pool_output_width
 
 
@@ -17,7 +17,7 @@ def double_hidden_layer_convolutional_model():
         (train_data, train_labels),
         (valid_data, valid_labels),
         (test_data, test_labels),
-    ) = load_hsk_100_data()
+    ) = load_hsk_data(num_classes=100)
 
     num_samples = train_data.shape[0] # 3000
     img_size = train_data.shape[1] # 224
