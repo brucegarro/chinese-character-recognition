@@ -296,7 +296,7 @@ def load_hsk_data(num_classes):
     """
     filename = "hsk_%s_dataset.pickle" % num_classes
     pickle_path = join(settings.DATA_PATH, filename)
-    with open(settings.HSK_100_PICKLE_PATH, "rb") as f:
+    with open(pickle_path, "rb") as f:
          data = pickle.load(f)
     
     train_data, train_labels = reformat(data["train_data"], data["train_labels"])
