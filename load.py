@@ -83,8 +83,8 @@ def get_bmp_path_for_directory_name(author_name, classes):
     list: [str] - full file paths
     """
     bmps_directory = join(settings.COMPETITION_GNT_PATH, author_name)
-    bmps_names = [ sub_name for sub_name in os.listdir(bmps_directory) if sub_name.endswith(".bmp") and sub_name.strip(".bmp") in classes ]
-    return bmps_names
+    bmps_names = [ bmp_name for bmp_name in os.listdir(bmps_directory) if bmp_name.endswith(".bmp") and bmp_name.strip(".bmp") in classes ]
+    return sorted(bmps_names)
 
 def get_all_classes():
     """
@@ -99,7 +99,7 @@ def get_all_classes():
     author_directory_names = get_competition_author_directory_names()
     for name in author_directory_names:
         filepath = join(settings.COMPETITION_GNT_PATH, name.strip(".gnt"))
-        class_names = set([ sub_name.strip(".bmp") for sub_name in os.listdir(filepath) if sub_name.endswith(".bmp") ])
+        class_names = set([ bmp_name.strip(".bmp") for bmp_name in os.listdir(filepath) if bmp_name.endswith(".bmp") ])
         if classes == None:
             classes = class_names
         else:
@@ -119,24 +119,74 @@ def filter_classes_by_hsk_level(classes, hsk_levels=(1,2,3,4,5,6)):
     """
     return [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
 
-def get_image_arrays_for_author_directory_names(author_directory_names):
-    # TODO: create a function which has the role of fetching all array date for authors
-    # The goal is to eventually separate the roles of converting the data and doing the test splits
-    pass
+def get_image_arrays_for_author_directory_names(author_directory_names, classes):
+    """
+    Returns
+    -------
+    img_data: Images data for all authors and classes
+        type: np.ndarray
+        dimensions: (number_of_authors, num_classes, img_size, img_size)
+
+    labels: Class labels for all authors and classes
+        type: np.ndarray
+        dimensions: (number_of_authors, num_classes)
+    """
+    class_labels = {label: i for i, label in enumerate(classes)}
+
+    num_classes = len(classes)
+    number_of_authors = len(author_directory_names)
+    data_set_size = int(num_classes * number_of_authors)
+
+    img_data = np.ndarray((number_of_authors, num_classes, IMG_SIZE, IMG_SIZE), dtype=np.float32)
+    labels = np.ndarray((number_of_authors, num_classes), dtype=np.int32)
+
+    for author_i, author_name in enumerate(author_directory_names):
+        print "\nauthor_name: %s" % author_name
+        bmp_directory = join(settings.COMPETITION_GNT_PATH, author_name)
+        bmp_names = get_bmp_path_for_directory_name(author_name, classes)
+
+        for bmp_name in bmp_names:
+            bmp_path = join(settings.COMPETITION_GNT_PATH, author_name, bmp_name)
+            class_char = bmp_name.strip(".bmp")
+            img = open_image_as_array(bmp_path)
+            # img_as_array, label, author_name, (class_char optional)
+            label_i = class_labels[class_char]
+
+            print "author_name, author_i, bmp_name, label_i: (%s, %s, %s, %s)" % (
+                author_name,
+                author_i,
+                bmp_name.strip(".bmp"),
+                label_i,
+            )
+
+            np.copyto(img_data[author_i][label_i], img)
+            labels[author_i][label_i] = label_i
+    return img_data, labels
+
 
 def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK_LEVELS):
     all_classes = get_all_classes()
     classes = filter_classes_by_hsk_level(all_classes)[:num_classes]
-    class_labels = {label: i for i, label in enumerate(classes)}
-    number_of_authors = 60
-    
-    train_size = int(num_classes*number_of_authors*TRAIN_SET_SIZE)
-    valid_size = int(num_classes*number_of_authors*VALID_SET_SIZE)
-    test_size = int(num_classes*number_of_authors*TEST_SET_SIZE)
 
-    train_data = np.ndarray((train_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
-    valid_data = np.ndarray((valid_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
-    test_data = np.ndarray((test_size, IMG_SIZE, IMG_SIZE), dtype=np.float32)
+    # Get data file system locations
+    author_directory_names = get_competition_author_directory_names()
+
+    # Covert images to arrays
+    img_data, labels = get_image_arrays_for_author_directory_names(author_directory_names, classes)
+
+    # Training set split code
+    number_of_authors, num_classes, img_size, _ = img_data.shape
+
+    train_size = int(number_of_authors*num_classes*TRAIN_SET_SIZE)
+    valid_size = int(number_of_authors*num_classes*VALID_SET_SIZE)
+    test_size = int(number_of_authors*num_classes*TEST_SET_SIZE)
+
+    train_set_upper_bound = (TRAIN_SET_SIZE*number_of_authors)
+    valid_set_upper_bound = ((TRAIN_SET_SIZE+VALID_SET_SIZE)*number_of_authors)
+
+    train_data = np.ndarray((train_size, img_size, img_size), dtype=np.float32)
+    valid_data = np.ndarray((valid_size, img_size, img_size), dtype=np.float32)
+    test_data = np.ndarray((test_size, img_size, img_size), dtype=np.float32)
     train_labels = np.ndarray(train_size, dtype=np.int32)
     valid_labels = np.ndarray(valid_size, dtype=np.int32)
     test_labels = np.ndarray(test_size, dtype=np.int32)
@@ -147,41 +197,34 @@ def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK
 
     train_i = valid_i = test_i = 0
 
-    author_directory_names = get_competition_author_directory_names()
-
-    for author_i, author_name in zip(random_author_indexes, author_directory_names):
+    for author_randomizer_i, author_i in enumerate(random_author_indexes):
+        author_name = author_directory_names[author_i]
         print "\nauthor_name: %s" % author_name
         training_chars = []
         valid_chars = []
         test_chars = []
-        
-        bmps_directory = join(settings.COMPETITION_GNT_PATH, author_name)
-        bmps_names = get_bmp_path_for_directory_name(author_name, classes)
-        try:
-            assert len(bmps_names) == num_classes
-        except AssertionError:
-            raise Exception("Expected %s bmps in folder %s, only found %s" % (num_classes, bmps_directory, len(bmps_names)))
-        
-        for sub_name in bmps_names:
-            bmp_path = join(settings.COMPETITION_GNT_PATH, author_name, sub_name)
-            class_char = sub_name.strip(".bmp")
-            img = open_image_as_array(bmp_path)
-            # img_as_array, label, author_name, (class_char optional)
-            label = class_labels[class_char]
 
-            print "author_name, author_i, sub_name, label: (%s, %s, %s, %s)" % (
+        bmps_names = get_bmp_path_for_directory_name(author_name, classes)
+
+        for label_i, bmp_name in enumerate(bmps_names):
+            bmp_path = join(settings.COMPETITION_GNT_PATH, author_name, bmp_name)
+            class_char = bmp_name.strip(".bmp")
+            img = img_data[author_i][label_i]
+            label = labels[author_i][label_i]
+
+            print "author_name, author_i, bmp_name, label: (%s, %s, %s, %s)" % (
                 author_name,
                 author_i,
-                sub_name.strip(".bmp"),
+                bmp_name.strip(".bmp"),
                 label,
             )
-            
-            if author_i < (TRAIN_SET_SIZE*number_of_authors):
+
+            if author_randomizer_i < train_set_upper_bound:
                 training_chars.append(class_char)
                 np.copyto(train_data[train_i], img)
                 train_labels[train_i] = label
                 train_i += 1
-            elif (TRAIN_SET_SIZE*number_of_authors) <= author_i < ((TRAIN_SET_SIZE+VALID_SET_SIZE)*number_of_authors):
+            elif train_set_upper_bound <= author_randomizer_i < valid_set_upper_bound:
                 valid_chars.append(class_char)
                 np.copyto(valid_data[valid_i], img)
                 valid_labels[valid_i] = label
@@ -243,7 +286,7 @@ def reformat(data, labels, num_channels=1, padding=16):
     labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
     return data, labels
 
-def load_hsk_100_data():
+def load_hsk_data(num_classes):
     """
     Format
     ------
@@ -251,6 +294,8 @@ def load_hsk_100_data():
         valid_data, valid_label: (1800, 224, 224, 1), (1800, 100)
         test_data, test_label: (1200, 224, 224, 1), (1200, 100)
     """
+    filename = "hsk_%s_dataset.pickle" % num_classes
+    pickle_path = join(DATA_PATH, filename)
     with open(settings.HSK_100_PICKLE_PATH, "rb") as f:
          data = pickle.load(f)
     
@@ -264,6 +309,10 @@ def load_hsk_100_data():
         (test_data, test_labels),
     )
 
+def load_hsk_100_data():
+    num_classes = 100
+    load_hsk_data(num_classes)
+
 def write_all_gnts_to_bmps():
     gnt_names = [ name for name in os.listdir(settings.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
     bmps_filepaths = [ join(settings.COMPETITION_GNT_PATH, name) for name in gnt_names ]
@@ -271,8 +320,14 @@ def write_all_gnts_to_bmps():
         write_gnt_to_bmps(bmp_path)
 
 def main():
-    # write_all_gnts_to_bmps()
-    bmps_to_pickle()
+    # Generate pickles for 100 classes out of all HSK levels
+    # bmps_to_pickle()
+
+    # Generate pickles for 25 classes out HSK 1
+    # bmps_to_pickle(num_classes=25, hsk_levels=(1,))
+
+    # Generate pickles for 10 classes out HSK 1
+    bmps_to_pickle(num_classes=10, hsk_levels=(1,))
 
 if __name__=="__main__":
     main()
