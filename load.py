@@ -24,38 +24,51 @@ TEST_SET_SIZE = 0.0
 DEFAULT_NUMBER_OF_CLASSES = 100
 DEFAULT_HSK_LEVELS = (1, 2, 3)
 
-def write_image(tag_name, image, writer):
-    writer_path = join(settings.COMPETITION_GNT_PATH, writer)
+def write_image(tag_name, image, writer, gnt_source_path):
+    writer_path = join(gnt_source_path, writer)
     if not os.path.exists(writer_path):
         os.mkdir(writer_path)
-    output_path = join(writer_path, "%s.bmp" % tag_name)
+    output_bmp_path = join(writer_path, "%s.bmp" % tag_name)
     # write image to bmp
-    if not os.path.exists(output_path):
-        scipy.misc.imsave(output_path, image)
-        print output_path
+    try:
+        if not os.path.exists(output_bmp_path):
+            scipy.misc.imsave(output_bmp_path, image)
+            print "Wrote: %s" % output_bmp_path
+        else:
+            print "Skipped: %s" % output_bmp_path
+    except TypeError:
+        print "Invalid: %s" % output_bmp_path
 
 
-def write_gnt_to_bmps(bmps_filepath):
-    with open(bmps_filepath, "rb") as f:
+def write_gnt_to_bmps(gnts_filepath, gnt_source_path):
+    with open(gnts_filepath, "rb") as f:
         while True:
             packed_length = f.read(4)
             if packed_length == '' or packed_length == ' ' or packed_length == b'':
                 break
             length = struct.unpack("<I", packed_length)[0]
+
+            # Get character label info
             tag_name = f.read(2)
-            tag_name = tag_name.decode("gb2312")
+            # The 2020 datasets are better decoded with gbk instead of gb2312
+            tag_name = tag_name.decode("gbk")
+
+            # Get image dimension info
             width = struct.unpack("<H", f.read(2))[0]
             height = struct.unpack("<H", f.read(2))[0]
 
+            # Get  image data
             raw_bytes = f.read(height*width)
             bytez = struct.unpack("{}B".format(height*width), raw_bytes)
 
+            # Convert image to array
             image = np.array(bytez).reshape(height, width)
             image = scipy.misc.imresize(image, (IMG_SIZE, IMG_SIZE))
 
-            writer  = bmps_filepath.split("/")[-1].split(".")[0]
-            write_image(tag_name, image, writer)
+            writer  = gnts_filepath.split("/")[-1].split(".")[0]
 
+            # Save image to bmp file
+            write_image(tag_name, image, writer, gnt_source_path)
 
 def open_image_as_array(filepath, normalize=False):
     with open(filepath, "rb") as f:
