@@ -17,9 +17,9 @@ from hsk import vocab
 
 IMG_SIZE = 224 # must be a multiple of 32 to work with maxpooling in vgg16
 
-TRAIN_SET_SIZE = 0.5
-VALID_SET_SIZE = 0.3
-TEST_SET_SIZE = 0.2
+TRAIN_SET_SIZE = 0.8
+VALID_SET_SIZE = 0.2
+TEST_SET_SIZE = 0.0
 
 DEFAULT_NUMBER_OF_CLASSES = 100
 DEFAULT_HSK_LEVELS = (1, 2, 3)
