@@ -261,24 +261,23 @@ def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK
 
     # TODO: Remove the constant HSK_100_PICKLE_PATH and create this path within this function.
     # below is a hack to get the name of the output path to reflect the correct number of classes.
-    output_path = join(DATA_PATH, (HSK_FILENAME % num_classes))
+    output_path = join(settings.DATA_PATH, (settings.HSK_FILENAME % num_classes))
 
     f = open(output_path, "wb")
     pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
     print "pickle written to: %s" % output_path
     f.close()
 
-def reformat(data, labels, num_channels=1, padding=16):
+def reformat_img_data(img_data, num_channels=1, padding=16):
     """
     Format
     -------
-        data: (N, IMG_SIZE, IMG_SIZE, num_channels)
-        labels: (N, num_labels)
+        img_data: (N, IMG_SIZE, IMG_SIZE, num_channels)
     """
-    _, x_size, y_size = data.shape
+    _, x_size, y_size = img_data.shape
 
     args = (-1, x_size, y_size, num_channels)
-    data = data.reshape(args).astype(np.float32)
+    img_data = img_data.reshape(args).astype(np.float32)
     
     # Add white padding to images
     white_value = 0.5
@@ -288,11 +287,39 @@ def reformat(data, labels, num_channels=1, padding=16):
         (padding, padding), # y dim
         (0, 0) # channel dim
     )
-    data = np.pad(data, padding_dim, constant_values=white_value, mode="constant")
+    img_data = np.pad(img_data, padding_dim, constant_values=white_value, mode="constant")
+    return img_data
 
+def reformat_labels(labels):
     num_labels = len(set(labels))
     labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
+    return labels
+
+def reformat_to_binary_labels(labels, target_class):
+    # Convert target label to 1; Convert all others to 0
+    labels = np.equal(labels, target_class).astype(np.float32)
+    # Resphare into N by 2 matrix
+    labels =(np.arange(2) == labels[:,None]).astype(np.float32)
+    return labels
+
+def reformat(data, labels, num_channels=1, padding=16):
+    """
+    Format
+    -------
+        data: (N, IMG_SIZE, IMG_SIZE, num_channels)
+        labels: (N, num_labels)
+    """
+    data = reformat_img_data(data, num_channels=num_channels, padding=padding)
+    labels = reformat_labels(labels)
+
     return data, labels
+
+def open_pickle(num_classes):
+    filename = "hsk_%s_dataset.pickle" % num_classes
+    pickle_path = join(settings.DATA_PATH, filename)
+    with open(pickle_path, "rb") as f:
+         data = pickle.load(f)
+    return data
 
 def load_hsk_data(num_classes):
     """
@@ -302,14 +329,34 @@ def load_hsk_data(num_classes):
         valid_data, valid_label: (1800, 224, 224, 1), (1800, 100)
         test_data, test_label: (1200, 224, 224, 1), (1200, 100)
     """
-    filename = "hsk_%s_dataset.pickle" % num_classes
-    pickle_path = join(settings.DATA_PATH, filename)
-    with open(pickle_path, "rb") as f:
-         data = pickle.load(f)
+    data = open_pickle(num_classes)
     
     train_data, train_labels = reformat(data["train_data"], data["train_labels"])
     valid_data, valid_labels = reformat(data["valid_data"], data["valid_labels"])
     test_data, test_labels = reformat(data["test_data"], data["test_labels"])
+
+    return (
+        (train_data, train_labels),
+        (valid_data, valid_labels),
+        (test_data, test_labels),
+    )
+
+def load_hsk_data_as_binary_label(num_classes, target_class):
+    """
+    Input
+    -----
+    target_class: Int - the int value corresponding to a single target class
+    """
+    data = open_pickle(num_classes)
+
+    train_data = reformat_img_data(data["train_data"])
+    train_labels = reformat_to_binary_labels(data["train_labels"], target_class=target_class)
+
+    valid_data = reformat_img_data(data["valid_data"])
+    valid_labels = reformat_to_binary_labels(data["valid_labels"], target_class=target_class)
+
+    test_data = reformat_img_data(data["test_data"])
+    test_labels = reformat_to_binary_labels(data["test_labels"], target_class=target_class)
 
     return (
         (train_data, train_labels),

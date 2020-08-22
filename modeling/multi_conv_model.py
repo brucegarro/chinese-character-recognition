@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from load import load_hsk_data, reformat
+from load import load_hsk_data_as_binary_label, load_hsk_data, reformat
 from utils import conv_output_width, pool_output_width
 
 
@@ -9,17 +9,18 @@ def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
 
 
-def multi_conv_model(num_classes):
+def multi_conv_model(num_classes, target_class=0):
     (
         (train_data, train_labels),
         (valid_data, valid_labels),
         (test_data, test_labels),
-    ) = load_hsk_data(num_classes=num_classes)
+    ) = load_hsk_data_as_binary_label(num_classes=num_classes, target_class=target_class)
+    # ) = load_hsk_data(num_classes=num_classes)
 
     num_samples = train_data.shape[0] # 3000
     img_size = train_data.shape[1]
     img_pixel_count = img_size**2
-    num_labels = train_labels.shape[1] # 100
+    num_labels = train_labels.shape[1] # num_classes
     print "\nnum_labels: %s\n" % num_labels
     num_channels = 1
 
