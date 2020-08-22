@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from load import load_hsk_100_data, reformat
+from load import load_hsk_data, reformat
 from utils import conv_output_width, pool_output_width
 
 
@@ -9,17 +9,18 @@ def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
 
 
-def multi_conv_model():
+def multi_conv_model(num_classes):
     (
         (train_data, train_labels),
         (valid_data, valid_labels),
         (test_data, test_labels),
-    ) = load_hsk_100_data()
+    ) = load_hsk_data(num_classes=num_classes)
 
     num_samples = train_data.shape[0] # 3000
     img_size = train_data.shape[1]
     img_pixel_count = img_size**2
     num_labels = train_labels.shape[1] # 100
+    print "\nnum_labels: %s\n" % num_labels
     num_channels = 1
 
     print "Datasets"
@@ -35,7 +36,7 @@ def multi_conv_model():
 
     # Hyperparameters
     dropout_rate = 0.5
-    learning_rate = 0.005
+    learning_rate = 0.0001
     training_epochs = 25
     batch_size = 50
     display_steps = 1
@@ -113,15 +114,19 @@ def multi_conv_model():
     ))
     Y = tf.placeholder(tf.float32, shape=(None, num_labels))
 
+    # w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
     w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
     b1 = tf.Variable(tf.zeros([kernal_n1]))
     
+    # w2 = tf.Variable(tf.truncated_normal([k2, k2, kernal_n1, kernal_n2], stddev=0.01))
     w2 = tf.Variable(tf.truncated_normal([k2, k2, kernal_n1, kernal_n2], stddev=0.01))
     b2 = tf.Variable(tf.zeros([kernal_n2]))
     
+    # w3 = tf.Variable(tf.truncated_normal([k3, k3, kernal_n2, kernal_n3], stddev=0.01))
     w3 = tf.Variable(tf.truncated_normal([k3, k3, kernal_n2, kernal_n3], stddev=0.01))
     b3 = tf.Variable(tf.zeros([kernal_n3]))
     
+    # w4 = tf.Variable(tf.truncated_normal([k4, k4, kernal_n3, kernal_n4], stddev=0.01))
     w4 = tf.Variable(tf.truncated_normal([k4, k4, kernal_n3, kernal_n4], stddev=0.01))
     b4 = tf.Variable(tf.zeros([kernal_n4]))
 
@@ -163,7 +168,8 @@ def multi_conv_model():
 
     softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
     cost = tf.reduce_mean(softmax)
-    optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
+    # optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Runtime configurations
     init = tf.global_variables_initializer()
@@ -181,49 +187,50 @@ def multi_conv_model():
         sess.run(init, options=options)
         
         for epoch in range(training_epochs):
-                avg_cost = 0.0 # aggregation variable
-                total_batch = int(num_samples/batch_size)
+            avg_cost = 0.0 # aggregation variable
+            total_batch = int(num_samples/batch_size)
 
-                for i in range(total_batch):
-                    batch_idx = np.random.randint(num_samples, size=batch_size)
-                    batch_x, batch_y = train_data[batch_idx], train_labels[batch_idx]
-                    _, c = sess.run([optimizer, cost], feed_dict={
-                        X: batch_x,
-                        Y: batch_y
-                    })
-                    avg_cost += c / total_batch
+            for i in range(total_batch):
+                batch_idx = np.random.randint(num_samples, size=batch_size)
+                batch_x, batch_y = train_data[batch_idx], train_labels[batch_idx]
+                _, c = sess.run([optimizer, cost], feed_dict={
+                    X: batch_x,
+                    Y: batch_y
+                })
+                avg_cost += c / total_batch
 
-                if ((epoch+1) % display_steps) == 0:
-                    print "Epoch: %s, cost: %s" % ((epoch+1), avg_cost)
+            if ((epoch+1) % display_steps) == 0:
+                print "Epoch: %s, cost: %s" % ((epoch+1), avg_cost)
 
-                correct_predictions = tf.equal(tf.argmax(softmax, -1), tf.argmax(Y, -1))
+            correct_predictions = tf.equal(tf.argmax(softmax, -1), tf.argmax(Y, -1))
 
-                # Validate model
-                accuracy_batch_size = 100
-                validation_size = valid_data.shape[0]
-                accuracy_batches = int(validation_size/accuracy_batch_size)
-                
-                batch_accuracies = []
-                # Randomized indexes
-                acc_idx = np.random.randint(validation_size, size=validation_size)
-                
-                for i in range(accuracy_batches):
-                    start_idx = accuracy_batch_size * i
-                    end_idx = accuracy_batch_size * (i+1)
-                    acc_batch_idx = acc_idx[start_idx:end_idx]
+            # Validate model
+            accuracy_batch_size = num_classes
+            validation_size = valid_data.shape[0]
+            accuracy_batches = int(validation_size/accuracy_batch_size)
+            
+            batch_accuracies = []
+            # Randomized indexes
+            acc_idx = np.random.randint(validation_size, size=validation_size)
+            
+            for i in range(accuracy_batches):
+                start_idx = accuracy_batch_size * i
+                end_idx = accuracy_batch_size * (i+1)
+                acc_batch_idx = acc_idx[start_idx:end_idx]
 
-                    acc_batch_x, acc_batch_y = valid_data[acc_batch_idx], valid_labels[acc_batch_idx]
-                    batch_accuracies.append(
-                        tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
-                          .eval({
-                            X: acc_batch_x,
-                            Y: acc_batch_y
-                        })
-                    )
-                accuracy = np.average(batch_accuracies)
+                acc_batch_x = valid_data[acc_batch_idx]
+                acc_batch_y =  valid_labels[acc_batch_idx]
+                accuracy = (tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+                  .eval({
+                    X: acc_batch_x,
+                    Y: acc_batch_y
+                }))
+                batch_accuracies.append(accuracy)
+            accuracy = np.average(batch_accuracies)
 
-                print "Validation Accuracy: %s" % accuracy
-                print ""
+            print "Validation Accuracy: %s" % accuracy
+            print ""
 
 if __name__ == "__main__":
-    multi_conv_model()
+    NUM_CLASSES = 10
+    multi_conv_model(num_classes=NUM_CLASSES)
