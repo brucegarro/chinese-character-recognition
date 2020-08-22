@@ -56,12 +56,17 @@ def write_gnt_to_bmps(bmps_filepath):
             writer  = bmps_filepath.split("/")[-1].split(".")[0]
             write_image(tag_name, image, writer)
 
-def open_image_as_array(filepath):
+
+def open_image_as_array(filepath, normalize=False):
     with open(filepath, "rb") as f:
         img = scipy.misc.imread(f, flatten=True)
-        for i in range(len(img)):
-            for j in range(len(img[0])):
-                img[i][j] = (img[i][j]/255.0) - 0.5
+
+        if normalize:
+            # If normalize is True, normalize pixel range to to range [-0.5, 0.5]
+            for i in range(len(img)):
+                for j in range(len(img[0])):
+                    img[i][j] = (img[i][j]/255.0) - 0.5
+
     return img
 
 def get_competition_author_directory_names():
@@ -242,6 +247,9 @@ def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK
     assert valid_i == valid_size
     assert test_i == test_size
 
+    print "train_labels: %s" % train_labels
+    print "valid_labels: %s" % valid_labels
+    print "test_labels: %s" % test_labels
     output = {
         "train_data": train_data,
         "train_labels": train_labels,
