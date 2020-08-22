@@ -168,7 +168,8 @@ def multi_conv_model(num_classes):
 
     softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
     cost = tf.reduce_mean(softmax)
-    optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
+    # optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Runtime configurations
     init = tf.global_variables_initializer()
