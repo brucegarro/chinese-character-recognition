@@ -377,11 +377,19 @@ def load_hsk_data_as_binary_label(num_classes, target_class):
         (test_data, test_labels),
     )
 
-def write_all_gnts_to_bmps():
-    gnt_names = [ name for name in os.listdir(settings.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
-    bmps_filepaths = [ join(settings.COMPETITION_GNT_PATH, name) for name in gnt_names ]
-    for bmp_path in bmps_filepaths:
-        write_gnt_to_bmps(bmp_path)
+def get_all_gnt_filepaths_in_folderpath(folderpath):
+    gnt_names = [ name for name in os.listdir(folderpath) if name.endswith(".gnt") ]
+    gnt_filepaths = [ join(folderpath, name) for name in gnt_names ]
+    return gnt_filepaths
+
+def write_all_gnts_in_source_to_bmps(gnt_source_path):
+    gnt_filepaths = get_all_gnt_filepaths_in_folderpath(gnt_source_path)
+    for i, gnt_path in enumerate(gnt_filepaths):
+        write_gnt_to_bmps(gnt_path, gnt_source_path)
+
+def write_all_gnts_to_bmps(gnt_source_paths=settings.GNT_SOURCE_PATHS):
+    for path in gnt_source_paths:
+        write_all_gnts_in_source_to_bmps(gnt_source_path=path)
 
 def main():
     # Generate pickles for 100 classes out of all HSK levels
@@ -391,7 +399,9 @@ def main():
     # bmps_to_pickle(num_classes=25, hsk_levels=(1,))
 
     # Generate pickles for 10 classes out HSK 1
-    bmps_to_pickle(num_classes=10, hsk_levels=(1,))
+    # bmps_to_pickle(num_classes=10, hsk_levels=(1,))
+
+    write_all_gnts_to_bmps()
 
 if __name__=="__main__":
     main()
