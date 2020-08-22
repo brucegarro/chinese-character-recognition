@@ -1,8 +1,6 @@
-# copy this into a local.py file with your local configurations
+from os.path import join
 
-COMPETITION_GNT_PATH = "/media/bruce/disk/chinese-character-recognition/competition-gnt/"
+HSK_FILENAME = "hsk_%s_dataset.pickle"
 
-# character_encoding = { i: v.decode("utf8") for i,v in enumerate([ name.split(".")[0] for name in os.listdir(os.path.join(local.COMPETITION_GNT_PATH, "C002-f-f")) ]) }
-
-if __name__=="__main__":
-	import ipdb; ipdb.set_trace()
+DATA_PATH = "/home/bruce/repos/chinese-character-recognition-data/"
+COMPETITION_GNT_PATH = join(DATA_PATH, "competition-gnt/")

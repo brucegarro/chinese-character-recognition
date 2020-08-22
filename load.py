@@ -261,7 +261,7 @@ def bmps_to_pickle(num_classes=DEFAULT_NUMBER_OF_CLASSES, hsk_levels=DEFAULT_HSK
 
     # TODO: Remove the constant HSK_100_PICKLE_PATH and create this path within this function.
     # below is a hack to get the name of the output path to reflect the correct number of classes.
-    output_path = join(DATA_PATH, (HSK_FILENAME % num_classes))
+    output_path = join(settings.DATA_PATH, (settings.HSK_FILENAME % num_classes))
 
     f = open(output_path, "wb")
     pickle.dump(output, f, pickle.HIGHEST_PROTOCOL)
