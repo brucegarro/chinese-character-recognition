@@ -1,8 +1,3 @@
-"""
-Produces folders with bmps generated of the HWDB1.1 Chinese character dataset of gnt files
-"""
-
-import struct
 import scipy.misc
 import numpy as np
 import glob
