@@ -37,7 +37,7 @@ def pickle_path_label_map(path_generator, pickle_path):
         pickle.dump(list(path_generator), f, pickle.HIGHEST_PROTOCOL)
         print "Created: %s\n" % pickle_path
 
-def get_path_label_map(pickle_path):
+def open_path_label_map(pickle_path):
     with open(pickle_path, "rb") as f:
         data = pickle.load(f)
     return data
