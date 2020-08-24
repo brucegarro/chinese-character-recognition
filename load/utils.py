@@ -64,3 +64,83 @@ def open_gnt_file(gnt_filepath):
 
             images.append((image, label_name))
     return images
+
+def open_image_as_array(filepath):
+    with open(filepath, "rb") as f:
+        img = scipy.misc.imread(f, flatten=True)
+
+        # if normalize_fn:
+        #     # If normalize is True, normalize pixel range to to range [-0.5, 0.5]
+        #     for i in range(len(img)):
+        #         for j in range(len(img[0])):
+        #             img[i][j] = (img[i][j]/255.0) - 0.5
+
+    return img
+
+def reshape_raw_img_data(img_data, num_channels=1):
+    """
+    Format
+    -------
+        img_data: (N, IMG_SIZE, IMG_SIZE, num_channels)
+    """
+    _, x_size, y_size = img_data.shape
+
+    args = (-1, x_size, y_size, num_channels)
+    img_data = img_data.reshape(args).astype(np.float32)
+    return img_data
+
+def pad_img_data(img_data, padding=16, padding_color_value=255):
+    # Add white padding to images
+    white_value = padding_color_value
+    padding_dim = (
+        (0, 0), # number of samples
+        (padding, padding), # X dim
+        (padding, padding), # y dim
+        (0, 0) # channel dim
+    )
+    img_data = np.pad(img_data, padding_dim, constant_values=white_value, mode="constant")
+    return img_data
+
+def reformat_labels(labels):
+    num_labels = len(set(labels))
+    labels = (np.arange(num_labels) == labels[:,None]).astype(np.float32)
+    return labels
+
+def get_class_label_map(class_labels):
+    class_label_map = {label: i for i, label in enumerate(class_labels)}
+    return class_label_map
+
+def create_image_and_label_data_set(path_label_data, class_label_map, padding=16, padding_color_value=255):
+    num_samples = len(path_label_data)
+    img_size = TARGET_IMG_SIZE
+
+    image_dataset = np.ndarray((num_samples, img_size, img_size), dtype=np.float32)
+    labels_dataset = np.ndarray(num_samples, dtype=np.int32)
+
+    for i, (image_path, label) in enumerate(path_label_data):
+        img = open_image_as_array(str(image_path))
+        np.copyto(image_dataset[i], img)
+        labels_dataset[i] = class_label_map[label]
+
+    image_dataset = reshape_raw_img_data(image_dataset)
+    image_dataset = pad_img_data(image_dataset, padding=padding, padding_color_value=padding_color_value)
+
+    labels_dataset = reformat_labels(labels_dataset)
+
+    return image_dataset, labels_dataset
+
+def train_valid_split(image_dataset, labels_dataset, train_frac=0.8, random_seed=0):
+    num_samples = len(image_dataset)
+    samples_idx = list(np.arange(num_samples))
+
+    # Randomize
+    np.random.seed(random_seed)
+    np.random.shuffle(samples_idx)
+
+    cutoff_idx = int(num_samples * train_frac)
+
+    train_image_dataset = image_dataset[samples_idx[:cutoff_idx]]
+    train_label_dataset = labels_dataset[samples_idx[:cutoff_idx]]
+    valid_image_dataset = image_dataset[samples_idx[cutoff_idx:]]
+    valid_label_dataset = labels_dataset[samples_idx[cutoff_idx:]]
+    return train_image_dataset, train_label_dataset, valid_image_dataset, valid_label_dataset
