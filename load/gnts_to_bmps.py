@@ -1,7 +1,6 @@
 """
 Produces folders with bmps generated of the HWDB1.0-1.2 Chinese character dataset of gnt files
 """
-
 import settings
 
 from load.utils import open_gnt_file, write_image

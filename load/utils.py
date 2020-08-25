@@ -110,7 +110,18 @@ def get_class_label_map(class_labels):
     class_label_map = {label: i for i, label in enumerate(class_labels)}
     return class_label_map
 
-def create_image_and_label_data_set(path_label_data, class_label_map, padding=16, padding_color_value=255):
+def gaussian_normalize_img_data(img_data):
+    mean, std = img_data.mean(), img_data.std()
+    img_data = (img_data - mean) / std
+    return img_data
+
+def create_image_and_label_data_set(
+    path_label_data,
+    class_label_map,
+    padding=16,
+    padding_color_value=255,
+    normalize_images=True,
+):
     num_samples = len(path_label_data)
     img_size = TARGET_IMG_SIZE
 
@@ -124,6 +135,7 @@ def create_image_and_label_data_set(path_label_data, class_label_map, padding=16
 
     image_dataset = reshape_raw_img_data(image_dataset)
     image_dataset = pad_img_data(image_dataset, padding=padding, padding_color_value=padding_color_value)
+    image_dataset = gaussian_normalize_img_data(image_dataset)
 
     labels_dataset = reformat_labels(labels_dataset)
 
