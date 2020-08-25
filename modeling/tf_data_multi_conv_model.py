@@ -1,8 +1,16 @@
+# -*- coding: utf-8 -*-
 import tensorflow as tf
+import tensorflow.contrib.eager as tfe
 import numpy as np
 
 from legacy_load import load_hsk_data_as_binary_label, load_hsk_data, reformat
 from utils import conv_output_width, pool_output_width
+from load.build_dataset import get_or_create_path_label_pickle
+from load.utils import (
+    create_image_and_label_data_set,
+    get_class_label_map,
+    train_valid_split,
+)
 
 
 def accuracy(predictions, labels):
@@ -10,12 +18,33 @@ def accuracy(predictions, labels):
 
 
 def multi_conv_model(num_classes, target_class=0):
+    # Load new data in
+    CLASS_LABELS = [
+        "一",
+        "三",
+        "上",
+        "下",
+        "不",
+        "与",
+        "丑",
+        "丙",
+        "丛",
+        "东",
+    ]
+    path_label_data = get_or_create_path_label_pickle(CLASS_LABELS)
+    class_label_map = get_class_label_map(CLASS_LABELS)
+    image_dataset, labels_dataset = create_image_and_label_data_set(
+        path_label_data,
+        class_label_map,
+        padding=16,
+        padding_color_value=255,
+    )
     (
-        (train_data, train_labels),
-        (valid_data, valid_labels),
-        (test_data, test_labels),
-    ) = load_hsk_data_as_binary_label(num_classes=num_classes, target_class=target_class)
-    # ) = load_hsk_data(num_classes=num_classes)
+        train_data,
+        train_labels,
+        valid_data,
+        valid_labels,
+    ) = train_valid_split(image_dataset, labels_dataset)
 
     num_samples = train_data.shape[0] # 3000
     img_size = train_data.shape[1]
@@ -27,7 +56,6 @@ def multi_conv_model(num_classes, target_class=0):
     print "Datasets"
     print "Training set: %s, %s" % (train_data.shape, train_labels.shape)
     print "Validation set: %s, %s" % (valid_data.shape, valid_labels.shape)
-    print "Test set: %s, %s" % (test_data.shape, test_labels.shape)
     print "num_samples: %s" % num_samples
     print "img_size: %s" % img_size
     print "img_pixel_count: %s" % img_pixel_count
@@ -38,7 +66,7 @@ def multi_conv_model(num_classes, target_class=0):
     # Hyperparameters
     dropout_rate = 0.1
     learning_rate = 0.001
-    training_epochs = 50
+    training_epochs = 25
     batch_size = 50
     display_steps = 1
 
@@ -78,6 +106,7 @@ def multi_conv_model(num_classes, target_class=0):
     pool_k4, pool_s4 = (2, 2)
     pool_o4 = pool_output_width(o4, pool_k4, pool_s4)
 
+    # fully_connected_n = 1024
     fully_connected_n = 100
     fc1_size = pool_o4 * pool_o4 * kernal_n4
 
@@ -108,13 +137,14 @@ def multi_conv_model(num_classes, target_class=0):
     print "fc1_size: %s\n" % fc1_size
     
     tf_valid_data = tf.constant(valid_data)
-    tf_test_data = tf.constant(test_data)
 
     # X = tf.map_fn(lambda img: tf.image.per_image_standardization(img), 
     #         tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels)
     # ))
     X = tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels))
     Y = tf.placeholder(tf.float32, shape=(None, num_labels))
+
+
 
     # w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
     w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
@@ -188,14 +218,17 @@ def multi_conv_model(num_classes, target_class=0):
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         metadata = tf.RunMetadata()
         sess.run(init, options=options)
-        
+
         for epoch in range(training_epochs):
             avg_cost = 0.0 # aggregation variable
             total_batch = int(num_samples/batch_size)
 
             for i in range(total_batch):
+
                 batch_idx = np.random.randint(num_samples, size=batch_size)
                 batch_x, batch_y = train_data[batch_idx], train_labels[batch_idx]
+
+
                 _, c = sess.run([optimizer, cost], feed_dict={
                     X: batch_x,
                     Y: batch_y
@@ -207,8 +240,34 @@ def multi_conv_model(num_classes, target_class=0):
 
             correct_predictions = tf.equal(tf.argmax(softmax, -1), tf.argmax(Y, -1))
 
+            # Calculate Training Accuracy
+            accuracy_batch_size = 50
+            train_size = valid_data.shape[0]
+            accuracy_batches = int(train_size/accuracy_batch_size)
+            batch_accuracies = []
+            # Randomized indexes
+            train_acc_idx = np.random.randint(train_size, size=train_size)
+
+            for i in range(accuracy_batches):
+                start_idx = accuracy_batch_size * i
+                end_idx = accuracy_batch_size * (i+1)
+                acc_batch_idx = train_acc_idx[start_idx:end_idx]
+
+                acc_batch_x = train_data[acc_batch_idx]
+                acc_batch_y =  train_labels[acc_batch_idx]
+                accuracy = (tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+                  .eval({
+                    X: acc_batch_x,
+                    Y: acc_batch_y,
+                }))
+
+                batch_accuracies.append(accuracy)
+                # import ipdb; ipdb.set_trace()
+            train_acurracy = np.average(batch_accuracies)
+            print "Training Accuracy: %s" % train_acurracy
+
             # Validate model
-            accuracy_batch_size = num_classes
+            accuracy_batch_size = 50
             validation_size = valid_data.shape[0]
             accuracy_batches = int(validation_size/accuracy_batch_size)
             

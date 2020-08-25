@@ -1,8 +1,3 @@
-"""
-Produces folders with bmps generated of the HWDB1.1 Chinese character dataset of gnt files
-"""
-
-import struct
 import scipy.misc
 import numpy as np
 import glob
@@ -23,38 +18,6 @@ TEST_SET_SIZE = 0.0
 
 DEFAULT_NUMBER_OF_CLASSES = 100
 DEFAULT_HSK_LEVELS = (1, 2, 3)
-
-def write_image(tag_name, image, writer):
-    writer_path = join(settings.COMPETITION_GNT_PATH, writer)
-    if not os.path.exists(writer_path):
-        os.mkdir(writer_path)
-    output_path = join(writer_path, "%s.bmp" % tag_name)
-    # write image to bmp
-    if not os.path.exists(output_path):
-        scipy.misc.imsave(output_path, image)
-        print output_path
-
-
-def write_gnt_to_bmps(bmps_filepath):
-    with open(bmps_filepath, "rb") as f:
-        while True:
-            packed_length = f.read(4)
-            if packed_length == '' or packed_length == ' ' or packed_length == b'':
-                break
-            length = struct.unpack("<I", packed_length)[0]
-            tag_name = f.read(2)
-            tag_name = tag_name.decode("gb2312")
-            width = struct.unpack("<H", f.read(2))[0]
-            height = struct.unpack("<H", f.read(2))[0]
-
-            raw_bytes = f.read(height*width)
-            bytez = struct.unpack("{}B".format(height*width), raw_bytes)
-
-            image = np.array(bytez).reshape(height, width)
-            image = scipy.misc.imresize(image, (IMG_SIZE, IMG_SIZE))
-
-            writer  = bmps_filepath.split("/")[-1].split(".")[0]
-            write_image(tag_name, image, writer)
 
 
 def open_image_as_array(filepath, normalize=False):
@@ -364,12 +327,6 @@ def load_hsk_data_as_binary_label(num_classes, target_class):
         (test_data, test_labels),
     )
 
-def write_all_gnts_to_bmps():
-    gnt_names = [ name for name in os.listdir(settings.COMPETITION_GNT_PATH) if name.endswith(".gnt") ]
-    bmps_filepaths = [ join(settings.COMPETITION_GNT_PATH, name) for name in gnt_names ]
-    for bmp_path in bmps_filepaths:
-        write_gnt_to_bmps(bmp_path)
-
 def main():
     # Generate pickles for 100 classes out of all HSK levels
     # bmps_to_pickle()
@@ -378,7 +335,8 @@ def main():
     # bmps_to_pickle(num_classes=25, hsk_levels=(1,))
 
     # Generate pickles for 10 classes out HSK 1
-    bmps_to_pickle(num_classes=10, hsk_levels=(1,))
+    # bmps_to_pickle(num_classes=10, hsk_levels=(1,))
+    pass
 
 if __name__=="__main__":
     main()

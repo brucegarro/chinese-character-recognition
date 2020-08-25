@@ -3,4 +3,38 @@ from os.path import join
 HSK_FILENAME = "hsk_%s_dataset.pickle"
 
 DATA_PATH = "/home/bruce/repos/chinese-character-recognition-data/"
+HSK_100_PICKLE_PATH = join(DATA_PATH, HSK_FILENAME % 100)
+HSK_10_PICKLE_PATH = join(DATA_PATH, HSK_FILENAME % 10)
+
 COMPETITION_GNT_PATH = join(DATA_PATH, "competition-gnt/")
+
+COMPETITION = "competition-gnt"
+HWDB_1_0_PART1_TRAIN = "Gnt1.0TrainPart1"
+HWDB_1_0_PART2_TRAIN = "Gnt1.0TrainPart2"
+HWDB_1_0_PART3_TRAIN = "Gnt1.0TrainPart3"
+HWDB_1_1_PART1_TRAIN = "Gnt1.1TrainPart1"
+HWDB_1_1_PART2_TRAIN = "Gnt1.1TrainPart2"
+HWDB_1_2_PART1_TRAIN = "Gnt1.2TrainPart1"
+HWDB_1_2_PART2_TRAIN = "Gnt1.2TrainPart2"
+HWDB_1_0_TEST = "Gnt1.0Test"
+HWDB_1_1_TEST = "Gnt1.1Test"
+HWDB_1_2_TEST = "Gnt1.2Test"
+
+TRAINING_DATA_NAMES = [
+    COMPETITION,
+    HWDB_1_0_PART1_TRAIN,
+    HWDB_1_0_PART2_TRAIN,
+    HWDB_1_0_PART3_TRAIN,
+    HWDB_1_1_PART1_TRAIN,
+    HWDB_1_1_PART2_TRAIN,
+    HWDB_1_2_PART1_TRAIN,
+    HWDB_1_2_PART2_TRAIN,
+]
+TEST_DATA_NAMES = [
+    HWDB_1_0_TEST,
+    HWDB_1_1_TEST,
+    HWDB_1_2_TEST,
+]
+GNT_SOURCE_NAMES = TRAINING_DATA_NAMES + TEST_DATA_NAMES
+
+GNT_SOURCE_PATHS = [ join(DATA_PATH, name) for name in GNT_SOURCE_NAMES ]
