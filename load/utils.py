@@ -120,7 +120,6 @@ def create_image_and_label_data_set(
     class_label_map,
     padding=16,
     padding_color_value=255,
-    normalize_images=True,
 ):
     num_samples = len(path_label_data)
     img_size = TARGET_IMG_SIZE
@@ -138,7 +137,6 @@ def create_image_and_label_data_set(
     image_dataset = gaussian_normalize_img_data(image_dataset)
 
     labels_dataset = reformat_labels(labels_dataset)
-
     return image_dataset, labels_dataset
 
 def train_valid_split(image_dataset, labels_dataset, train_frac=0.8, random_seed=0):

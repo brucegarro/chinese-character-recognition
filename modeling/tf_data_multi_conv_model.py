@@ -37,7 +37,7 @@ def multi_conv_model(num_classes, target_class=0):
         path_label_data,
         class_label_map,
         padding=16,
-        padding_color_value=255
+        padding_color_value=255,
     )
     (
         train_data,
@@ -64,8 +64,8 @@ def multi_conv_model(num_classes, target_class=0):
     print ""
 
     # Hyperparameters
-    dropout_rate = 0.5
-    learning_rate = 0.0001
+    dropout_rate = 0.1
+    learning_rate = 0.001
     training_epochs = 25
     batch_size = 50
     display_steps = 1
@@ -106,7 +106,8 @@ def multi_conv_model(num_classes, target_class=0):
     pool_k4, pool_s4 = (2, 2)
     pool_o4 = pool_output_width(o4, pool_k4, pool_s4)
 
-    fully_connected_n = 1024
+    # fully_connected_n = 1024
+    fully_connected_n = 100
     fc1_size = pool_o4 * pool_o4 * kernal_n4
 
     print "i1, k1, s1, p1: (%s, %s, %s, %s)" % (i1, k1, s1, p1)
@@ -197,10 +198,11 @@ def multi_conv_model(num_classes, target_class=0):
         
         return output
 
-    softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
+    # softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
+    softmax = tf.nn.sigmoid_cross_entropy_with_logits(logits=model(X), labels=Y)
     cost = tf.reduce_mean(softmax)
-    # optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+    # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Runtime configurations
     init = tf.global_variables_initializer()
@@ -238,8 +240,34 @@ def multi_conv_model(num_classes, target_class=0):
 
             correct_predictions = tf.equal(tf.argmax(softmax, -1), tf.argmax(Y, -1))
 
+            # Calculate Training Accuracy
+            accuracy_batch_size = 50
+            train_size = valid_data.shape[0]
+            accuracy_batches = int(train_size/accuracy_batch_size)
+            batch_accuracies = []
+            # Randomized indexes
+            train_acc_idx = np.random.randint(train_size, size=train_size)
+
+            for i in range(accuracy_batches):
+                start_idx = accuracy_batch_size * i
+                end_idx = accuracy_batch_size * (i+1)
+                acc_batch_idx = train_acc_idx[start_idx:end_idx]
+
+                acc_batch_x = train_data[acc_batch_idx]
+                acc_batch_y =  train_labels[acc_batch_idx]
+                accuracy = (tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+                  .eval({
+                    X: acc_batch_x,
+                    Y: acc_batch_y,
+                }))
+
+                batch_accuracies.append(accuracy)
+                # import ipdb; ipdb.set_trace()
+            train_acurracy = np.average(batch_accuracies)
+            print "Training Accuracy: %s" % train_acurracy
+
             # Validate model
-            accuracy_batch_size = num_classes
+            accuracy_batch_size = 50
             validation_size = valid_data.shape[0]
             accuracy_batches = int(validation_size/accuracy_batch_size)
             

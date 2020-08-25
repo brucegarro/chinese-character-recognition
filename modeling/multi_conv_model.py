@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from load import load_hsk_data_as_binary_label, load_hsk_data, reformat
+from legacy_load import load_hsk_data_as_binary_label, load_hsk_data, reformat
 from utils import conv_output_width, pool_output_width
 
 
@@ -36,9 +36,9 @@ def multi_conv_model(num_classes, target_class=0):
     print ""
 
     # Hyperparameters
-    dropout_rate = 0.5
-    learning_rate = 0.0001
-    training_epochs = 25
+    dropout_rate = 0.1
+    learning_rate = 0.001
+    training_epochs = 50
     batch_size = 50
     display_steps = 1
 
@@ -78,7 +78,7 @@ def multi_conv_model(num_classes, target_class=0):
     pool_k4, pool_s4 = (2, 2)
     pool_o4 = pool_output_width(o4, pool_k4, pool_s4)
 
-    fully_connected_n = 1024
+    fully_connected_n = 100
     fc1_size = pool_o4 * pool_o4 * kernal_n4
 
     print "i1, k1, s1, p1: (%s, %s, %s, %s)" % (i1, k1, s1, p1)
@@ -110,9 +110,10 @@ def multi_conv_model(num_classes, target_class=0):
     tf_valid_data = tf.constant(valid_data)
     tf_test_data = tf.constant(test_data)
 
-    X = tf.map_fn(lambda img: tf.image.per_image_standardization(img), 
-            tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels)
-    ))
+    # X = tf.map_fn(lambda img: tf.image.per_image_standardization(img), 
+    #         tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels)
+    # ))
+    X = tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels))
     Y = tf.placeholder(tf.float32, shape=(None, num_labels))
 
     # w1 = tf.Variable(tf.truncated_normal([k1, k1, num_channels, kernal_n1], stddev=0.01))
@@ -167,10 +168,11 @@ def multi_conv_model(num_classes, target_class=0):
         
         return output
 
-    softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
+    # softmax = tf.nn.softmax_cross_entropy_with_logits_v2(logits=model(X), labels=Y)
+    softmax = tf.nn.sigmoid_cross_entropy_with_logits(logits=model(X), labels=Y)
     cost = tf.reduce_mean(softmax)
-    # optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+    # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Runtime configurations
     init = tf.global_variables_initializer()
