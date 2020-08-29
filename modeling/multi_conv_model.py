@@ -38,7 +38,7 @@ def multi_conv_model(num_classes, target_class=0):
     # Hyperparameters
     dropout_rate = 0.1
     learning_rate = 0.001
-    training_epochs = 50
+    training_epochs = 25
     batch_size = 50
     display_steps = 1
 
@@ -110,9 +110,6 @@ def multi_conv_model(num_classes, target_class=0):
     tf_valid_data = tf.constant(valid_data)
     tf_test_data = tf.constant(test_data)
 
-    # X = tf.map_fn(lambda img: tf.image.per_image_standardization(img), 
-    #         tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels)
-    # ))
     X = tf.placeholder(tf.float32, shape=(None, img_size, img_size, num_channels))
     Y = tf.placeholder(tf.float32, shape=(None, num_labels))
 
