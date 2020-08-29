@@ -1,3 +1,4 @@
+import re
 import itertools
 import os
 from os.path import join
@@ -41,3 +42,21 @@ def open_path_label_map(pickle_path):
     with open(pickle_path, "rb") as f:
         data = pickle.load(f)
     return data
+
+def is_one_chinese_character(text, regex=re.compile(ur'[\u4e00-\u9fff]+')):
+    utf_8_text = text.decode("utf-8")
+    return (len(utf_8_text) == 1) and bool(regex.match(utf_8_text))
+
+def get_all_classes_with_counts_in_filesystem(source_paths=settings.GNT_SOURCE_PATHS):
+    # Get labels from the names on the bmp files
+    class_label_counts = {}
+
+    for path, _ in get_filepaths_for_class_labels(["*"]):
+        if is_one_chinese_character(path.stem):
+            class_label = path.stem
+            if class_label not in class_label_counts:
+                class_label_counts[class_label] = 1
+            else:
+                class_label_counts[class_label] += 1
+
+    return class_label_counts

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+from os.path import join
 import tensorflow as tf
+from six.moves import cPickle as pickle
 
 import settings
 from load.os_utils import (
@@ -9,20 +11,29 @@ from load.os_utils import (
     get_path_label_pickle_path,
     pickle_path_label_map,
     open_path_label_map,
+    get_all_classes_with_counts_in_filesystem,
 )
+from character_sets.hsk_10_characters import HSK_10_CLASS_LABELS
 
-CLASS_LABELS = [
-    "一",
-    "三",
-    "上",
-    "下",
-    "不",
-    "与",
-    "丑",
-    "丙",
-    "丛",
-    "东",
-]
+CLASS_LABELS = HSK_10_CLASS_LABELS
+
+def map_img_path_to_array(image_path):
+    image = tf.io.decode_bmp(tf.read_file(image_path))
+    return image
+
+def map_fn(image_path, label):
+    return map_img_path_to_array(image_path), label
+
+def build_dataset_for_class_labels(image_paths, labels):
+    # Create Tensorflow Dataset out of image and labels dataset
+    image_paths_tensor = tf.convert_to_tensor(image_paths, dtype=tf.string)
+    label_tensor = tf.convert_to_tensor(labels)
+
+    dataset = tf.data.Dataset.from_tensor_slices((image_paths_tensor, label_tensor))
+    dataset = dataset.map(map_fn, num_parallel_calls=2)
+
+    return dataset
+
 
 def get_or_create_path_label_pickle(class_labels):
     pickle_path = get_path_label_pickle_path(len(class_labels))
@@ -37,31 +48,26 @@ def get_or_create_path_label_pickle(class_labels):
     path_label_data = open_path_label_map(pickle_path)
     return path_label_data
 
+def get_or_create_class_label_count_pickle():
+    filename = "class_label_counts.pickle"
+    class_label_count_pickle_path = join(settings.DATA_PATH, filename)
+    
+    if os.path.exists(class_label_count_pickle_path):
+        # Open existing file
+        with open(class_label_count_pickle_path, "rb") as f:
+            data = pickle.load(f)
+    else:
+        # Create a file if it doesn't exist
+        with open(class_label_count_pickle_path, "wb") as f:
+            class_label_counts = get_all_classes_with_counts_in_filesystem()
+            data = pickle.dump(class_label_counts, f, pickle.HIGHEST_PROTOCOL)
+    return data
 
-def map_img_path_to_array(image_path):
-    image = tf.io.decode_bmp(tf.read_file(image_path))
-    return image
-
-def map_fn(image_path, label):
-    return map_img_path_to_array(image_path), label
-
-def build_dataset_for_class_labels(image_paths, labels):
-    # https://stackoverflow.com/questions/44416764/loading-folders-of-images-in-tensorflow
-    image_paths_tensor = tf.convert_to_tensor(image_paths, dtype=tf.string)
-    label_tensor = tf.convert_to_tensor(labels)
-
-    dataset = tf.data.Dataset.from_tensor_slices((image_paths_tensor, label_tensor))
-    dataset = dataset.map(map_fn, num_parallel_calls=2)
-
-    return dataset
+    get_all_classes_with_counts_in_filesystem()
 
 if __name__ == "__main__":
-    class_labels = CLASS_LABELS
-
     # Get list of image files and corresponding labels
-    path_label_data = get_or_create_path_label_pickle(class_labels)
-    # for path, label in path_label_data:
-    #     print path, label
-
-    image_paths = [ str(path) for path, label in path_label_data ]
-    labels = [ label for path, label in path_label_data ]
+    # path_label_data = get_or_create_path_label_pickle(HSK_10_CLASS_LABELS)
+    
+    # Create pickle with class label count
+    get_or_create_class_label_count_pickle()
