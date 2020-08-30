@@ -8,7 +8,7 @@ from six.moves import cPickle as pickle
 import tensorflow as tf
 
 import settings
-from hsk import vocab
+from hsk import filter_classes_by_hsk_level
 
 IMG_SIZE = 224 # must be a multiple of 32 to work with maxpooling in vgg16
 
@@ -76,16 +76,6 @@ def get_all_classes():
     sorted_classes = sorted(list(classes))
 
     return sorted_classes
-
-def filter_classes_by_hsk_level(classes, hsk_levels=(1,2,3,4,5,6)):
-    """
-    Filters Chinese character classes by whether they are part of HSK vocabulary lists
-
-    Returns
-    -------
-    list: [str] - classes (chinese characters)
-    """
-    return [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
 
 def get_image_arrays_for_author_directory_names(author_directory_names, classes):
     """

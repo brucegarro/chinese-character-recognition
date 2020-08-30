@@ -5019,3 +5019,14 @@ vocab_6 = { word: 6 for word in [
 ]}
 
 vocab = dict(vocab_1.items() + vocab_2.items() + vocab_3.items() + vocab_4.items() + vocab_5.items() + vocab_6.items())
+
+
+def filter_classes_by_hsk_level(classes, hsk_levels=(1,2,3,4,5,6)):
+    """
+    Filters Chinese character classes by whether they are part of HSK vocabulary lists
+
+    Returns
+    -------
+    list: [str] - classes (chinese characters)
+    """
+    return [ cl for cl in classes if vocab.get(cl) in hsk_levels ]
