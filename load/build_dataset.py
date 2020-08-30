@@ -6,7 +6,6 @@ from six.moves import cPickle as pickle
 
 import settings
 from load.os_utils import (
-    get_filepaths_for_class_label,
     get_filepaths_for_class_labels,
     get_path_label_pickle_path,
     pickle_path_label_map,
@@ -14,8 +13,8 @@ from load.os_utils import (
     get_all_classes_with_counts_in_filesystem,
 )
 from character_sets.hsk_10_characters import HSK_10_CLASS_LABELS
+from character_sets.hsk_100_characters import HSK_100_CLASS_LABELS
 
-CLASS_LABELS = HSK_10_CLASS_LABELS
 
 def map_img_path_to_array(image_path):
     image = tf.io.decode_bmp(tf.read_file(image_path))
@@ -67,7 +66,9 @@ def get_or_create_class_label_count_pickle():
 
 if __name__ == "__main__":
     # Get list of image files and corresponding labels
-    # path_label_data = get_or_create_path_label_pickle(HSK_10_CLASS_LABELS)
+    # CLASS_LABELS = HSK_100_CLASS_LABELS
+    CLASS_LABELS = HSK_100_CLASS_LABELS
+    path_label_data = get_or_create_path_label_pickle(CLASS_LABELS)
     
     # Create pickle with class label count
-    get_or_create_class_label_count_pickle()
+    # get_or_create_class_label_count_pickle()

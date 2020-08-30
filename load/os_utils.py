@@ -12,20 +12,34 @@ def get_all_gnt_filepaths_in_folderpath(folderpath):
     gnt_filepaths = [ join(folderpath, name) for name in gnt_names ]
     return gnt_filepaths
 
-def get_filepaths_for_class_label(class_label, source_paths):
-    generators = ([ 
-        Path(base_path).rglob("*/%s.bmp" % class_label) for base_path in source_paths
-    ])
-    for generator in generators:
-        for path in generator:
-            yield path, class_label
-
 def get_filepaths_for_class_labels(class_labels, source_paths=settings.GNT_SOURCE_PATHS):
-    class_label_generators = [
-        get_filepaths_for_class_label(class_label, source_paths) for class_label in class_labels
-    ]
-    path_generator = itertools.chain(*class_label_generators)
-    return path_generator
+    """
+    Find all filepaths matching class labels in the source paths
+
+    Return
+    ------
+    Generator --> yields:
+        path: PosixPath - The filepath for a found class label
+        class_label: Str (utf-8) - The filepath for a found class label
+    """
+    # Get all bmp paths in the source folders
+    generators = ([ 
+        Path(base_path).rglob("*.bmp") for base_path in source_paths
+    ])
+    path_generator = itertools.chain(*generators)
+
+    # Create regex to match class labels in filepaths
+    unicode_labels = unicode("|".join(class_labels), "utf-8")
+    expression = u"^.*(%s).bmp" % unicode_labels
+    pattern = re.compile(expression)
+
+    for path in path_generator:
+        unicode_path = unicode(str(path), "utf-8")
+        match = pattern.match(unicode_path)
+        if match:
+            class_label = match.group(1).encode("utf-8")
+            print path
+            yield path, class_label
 
 def get_path_label_pickle_path(num_classes):
     filename = "path_label_mapping_for_%s_labels.pickle" % num_classes
