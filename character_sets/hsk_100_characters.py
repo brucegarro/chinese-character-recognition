@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 100 Chinese characters pulled from HSK vocaburlary lists
+
+To produce this list I ran:
+---------------------------
+    from load.build_dataset import get_or_create_class_label_count_pickle
+    from hsk import filter_classes_by_hsk_level
+
+    label_counts = get_or_create_class_label_count_pickle()
+    classes = label_counts.keys()
+    HSK_100_CLASS_LABELS = sorted(filter_classes_by_hsk_level(classes, hsk_levels=(1,2)))[:100]
 """
 
 HSK_100_CLASS_LABELS = [
