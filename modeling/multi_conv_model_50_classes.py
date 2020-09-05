@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
-import tensorflow.contrib.eager as tfe
 import numpy as np
 
-from legacy_load import load_hsk_data_as_binary_label, load_hsk_data, reformat
 from utils import conv_output_width, pool_output_width
 from load.build_dataset import get_or_create_path_label_pickle
 from load.utils import (
@@ -17,13 +15,9 @@ def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
 
 
-def multi_conv_model(num_classes, target_class=0):
-    # Load new data in
-    CLASS_LABELS = HSK_50_CLASS_LABELS
-
-
-    path_label_data = get_or_create_path_label_pickle(CLASS_LABELS)
-    class_label_map = get_class_label_map(CLASS_LABELS)
+def multi_conv_model(class_labels, target_class=0):
+    path_label_data = get_or_create_path_label_pickle(class_labels)
+    class_label_map = get_class_label_map(class_labels)
     image_dataset, labels_dataset = create_image_and_label_data_set(
         path_label_data,
         class_label_map,
@@ -285,5 +279,5 @@ def multi_conv_model(num_classes, target_class=0):
             print ""
 
 if __name__ == "__main__":
-    NUM_CLASSES = 10
-    multi_conv_model(num_classes=NUM_CLASSES)
+    CLASS_LABELS = HSK_50_CLASS_LABELS
+    multi_conv_model(CLASS_LABELS)
