@@ -11,7 +11,7 @@ from load.utils import (
     get_class_label_map,
     train_valid_split,
 )
-
+from character_sets.hsk_50_characters import HSK_50_CLASS_LABELS
 
 def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
@@ -19,18 +19,9 @@ def accuracy(predictions, labels):
 
 def multi_conv_model(num_classes, target_class=0):
     # Load new data in
-    CLASS_LABELS = [
-        "一",
-        "三",
-        "上",
-        "下",
-        "不",
-        "与",
-        "丑",
-        "丙",
-        "丛",
-        "东",
-    ]
+    CLASS_LABELS = HSK_50_CLASS_LABELS
+
+
     path_label_data = get_or_create_path_label_pickle(CLASS_LABELS)
     class_label_map = get_class_label_map(CLASS_LABELS)
     image_dataset, labels_dataset = create_image_and_label_data_set(
@@ -46,7 +37,7 @@ def multi_conv_model(num_classes, target_class=0):
         valid_labels,
     ) = train_valid_split(image_dataset, labels_dataset)
 
-    num_samples = train_data.shape[0] # 3000
+    num_samples = train_data.shape[0] # len(train_data)
     img_size = train_data.shape[1]
     img_pixel_count = img_size**2
     num_labels = train_labels.shape[1] # num_classes

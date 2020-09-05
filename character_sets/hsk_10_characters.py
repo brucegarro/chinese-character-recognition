@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-10 Chinese characters pull from HSK vocaburlary sets
+10 Chinese characters pulled from HSK vocaburlary lists
 """
 
 HSK_10_CLASS_LABELS = [
