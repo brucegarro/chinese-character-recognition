@@ -71,5 +71,5 @@ If the program is running successfully, the validation results of each training 
 
 ## Acknowledgments
 
-This project is motivated by research conducted by Yuhao Zhang in their paper "Deep Convolutional Network for Handwritten Chinese Character Recognition"
-yuhao.im/files/Zhang_CNNChar.pdf
+This project is motivated by research conducted by Yuhao Zhang in their paper "Deep Convolutional Network for Handwritten Chinese Character Recognition".
+http://yuhao.im/files/Zhang_CNNChar.pdf
