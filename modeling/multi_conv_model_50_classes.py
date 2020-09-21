@@ -155,19 +155,19 @@ def multi_conv_model(class_labels, target_class=0):
 
     def model(X):
         # Convolutional Layers
-        conv1 = tf.nn.conv2d(X, w1, [1, s1, s1, 1], padding="SAME")
+        conv1 = tf.nn.conv2d(input=X, filter=w1, strides=[1, s1, s1, 1], padding="SAME")
         activation1 = tf.nn.relu(conv1 + b1)
         pool1 = tf.nn.max_pool(activation1, ksize=[1, pool_k1, pool_k1, 1], strides=[1, pool_s1, pool_s1, 1], padding="SAME")
         
-        conv2 = tf.nn.conv2d(pool1, w2, [1, s2, s2, 1], padding="SAME")
+        conv2 = tf.nn.conv2d(input=pool1, filter=w2, strides=[1, s2, s2, 1], padding="SAME")
         activation2 = tf.nn.relu(conv2 + b2)
         pool2 = tf.nn.max_pool(activation2, ksize=[1, pool_k2, pool_k2, 1], strides=[1, pool_s2, pool_s2, 1], padding="SAME")
         
-        conv3 = tf.nn.conv2d(pool2, w3, [1, s3, s3, 1], padding="SAME")
+        conv3 = tf.nn.conv2d(input=pool2, filter=w3, strides=[1, s3, s3, 1], padding="SAME")
         activation3 = tf.nn.relu(conv3 + b3)
         pool3 = tf.nn.max_pool(activation3, ksize=[1, pool_k3, pool_k3, 1], strides=[1, pool_s3, pool_s3, 1], padding="SAME")
         
-        conv4 = tf.nn.conv2d(pool3, w4, [1, s4, s4, 1], padding="SAME")
+        conv4 = tf.nn.conv2d(input=pool3, filter=w4, strides=[1, s4, s4, 1], padding="SAME")
         activation4 = tf.nn.relu(conv4 + b4)
         pool4 = tf.nn.max_pool(activation4, ksize=[1, pool_k4, pool_k4, 1], strides=[1, pool_s4, pool_s4, 1], padding="SAME")
 
