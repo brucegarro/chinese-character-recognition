@@ -5,12 +5,7 @@ from keras.callbacks import TensorBoard
 import numpy as np
 
 from utils import conv_output_width, pool_output_width
-from load.build_dataset import get_or_create_path_label_pickle
-from load.utils import (
-    create_image_and_label_data_set,
-    get_class_label_map,
-    train_valid_split,
-)
+from load.build_dataset import build_in_memory_dataset, build_dataset_for_class_labels
 from character_sets.hsk_50_characters import HSK_50_CLASS_LABELS
 from character_sets.hsk_10_characters import HSK_10_CLASS_LABELS
 
@@ -18,21 +13,11 @@ def accuracy(predictions, labels):
     return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
 
 
-def multi_conv_model(class_labels, target_class=0):
-    path_label_data = get_or_create_path_label_pickle(class_labels)
-    class_label_map = get_class_label_map(class_labels)
-    image_dataset, labels_dataset = create_image_and_label_data_set(
-        path_label_data,
-        class_label_map,
-        padding=16,
-        padding_color_value=255,
-    )
-    (
-        train_data,
-        train_labels,
-        valid_data,
-        valid_labels,
-    ) = train_valid_split(image_dataset, labels_dataset)
+def multi_conv_model(dataset, target_class=0):
+    train_data = dataset["train_data"]
+    train_labels = dataset["train_labels"]
+    valid_data = dataset["valid_data"]
+    valid_labels = dataset["valid_labels"]
 
     num_samples = train_data.shape[0] # len(train_data)
     img_size = train_data.shape[1]
@@ -199,6 +184,7 @@ def multi_conv_model(class_labels, target_class=0):
         )
 
 if __name__ == "__main__":
-    CLASS_LABELS = HSK_10_CLASS_LABELS
+    # CLASS_LABELS = HSK_10_CLASS_LABELS
     CLASS_LABELS = HSK_50_CLASS_LABELS
-    multi_conv_model(CLASS_LABELS)
+    dataset = build_in_memory_dataset(CLASS_LABELS)
+    multi_conv_model(dataset)

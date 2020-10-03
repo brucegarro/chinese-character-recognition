@@ -12,6 +12,11 @@ from load.os_utils import (
     open_path_label_map,
     get_all_classes_with_counts_in_filesystem,
 )
+from load.utils import (
+    create_image_and_label_data_set,
+    get_class_label_map,
+    train_valid_split,
+)
 from character_sets.hsk_10_characters import HSK_10_CLASS_LABELS
 from character_sets.hsk_50_characters import HSK_50_CLASS_LABELS
 from character_sets.hsk_100_characters import HSK_100_CLASS_LABELS
@@ -63,7 +68,29 @@ def get_or_create_class_label_count_pickle():
             data = pickle.dump(class_label_counts, f, pickle.HIGHEST_PROTOCOL)
     return data
 
-    get_all_classes_with_counts_in_filesystem()
+def build_in_memory_dataset(class_labels):
+    path_label_data = get_or_create_path_label_pickle(class_labels)
+    class_label_map = get_class_label_map(class_labels)
+    image_dataset, labels_dataset = create_image_and_label_data_set(
+        path_label_data,
+        class_label_map,
+        padding=16,
+        padding_color_value=255,
+    )
+
+    (
+        train_data,
+        train_labels,
+        valid_data,
+        valid_labels,
+    ) = train_valid_split(image_dataset, labels_dataset)
+
+    return {
+        "train_data": train_data,
+        "train_labels": train_labels,
+        "valid_data": valid_data,
+        "valid_labels": valid_labels,
+    }
 
 if __name__ == "__main__":
     # Get list of image files and corresponding labels
