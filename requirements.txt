@@ -21,7 +21,7 @@ pkg-resources==0.0.0
 prompt-toolkit==1.0.15
 protobuf==3.6.1
 ptyprocess==0.5.2
-Pygments==2.2.0
+Pygments==2.7.4
 scandir==1.6
 scipy==1.2.0
 simplegeneric==0.8.1
